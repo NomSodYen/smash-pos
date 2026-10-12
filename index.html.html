@@ -1,0 +1,850 @@
+<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>POS สแมชเบอร์เกอร์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+/* Layout: ที่ขายอยู่ซ้าย (ปุ่มทานที่ร้าน/กลับบ้านอยู่บนสุด) ออเดอร์ติดขวา; บนมือถือออเดอร์เป็นแผ่นเลื่อนขึ้นจากแถบล่าง */
+:root{
+  --bg:#eceeeb; --surface:#ffffff; --ink:#1a201d; --muted:#5b665f; --line:#d7dcd8;
+  --accent:#c93522; --on-accent:#ffffff; --promo:#f1b90c; --on-promo:#2a2000;
+  --good:#1c7a4a; --bad:#b3261e; --beef:#6a2e1b; --pork:#c9856a; --bun:#e0a24a;
+  --f-display:"Bai Jamjuree","Noto Sans Thai",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans Thai","Noto Sans Thai",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#111513; --surface:#1a201d; --ink:#edf1ee; --muted:#98a39d; --line:#2b3430;
+    --accent:#ee5a44; --on-accent:#1a0603; --promo:#f2c230; --on-promo:#2a2000;
+    --good:#4cc38a; --bad:#ff8a80; --beef:#c4694a; --pork:#e0a58c; --bun:#d99a3f;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#111513; --surface:#1a201d; --ink:#edf1ee; --muted:#98a39d; --line:#2b3430;
+  --accent:#ee5a44; --on-accent:#1a0603; --promo:#f2c230; --on-promo:#2a2000;
+  --good:#4cc38a; --bad:#ff8a80; --beef:#c4694a; --pork:#e0a58c; --bun:#d99a3f;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;padding-inline:16px;padding-block:0 96px}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.num{font-family:var(--f-display);font-variant-numeric:tabular-nums}
+.wrap{max-width:1120px;margin-inline:auto}
+
+/* header */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px;padding-block:12px;border-bottom:1px solid var(--line)}
+.brand{display:flex;flex-direction:column;min-width:0}
+.brand b{font-family:var(--f-display);font-size:20px;font-weight:700;line-height:1.1}
+.brand span{font-size:13px;color:var(--muted)}
+.tabs{display:flex;gap:4px;background:var(--line);padding:3px;border-radius:12px}
+.tab{border:0;background:transparent;padding:8px 16px;min-height:40px;border-radius:9px;font-weight:600;color:var(--muted)}
+.tab[aria-selected="true"]{background:var(--surface);color:var(--ink)}
+.tab i{font-style:normal;font-family:var(--f-display);font-size:12px;background:var(--accent);color:var(--on-accent);border-radius:99px;padding:1px 7px;margin-left:6px}
+
+/* sell */
+.sell{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:24px;align-items:start;padding-top:16px}
+.mode{display:grid;grid-template-columns:1fr 1fr;gap:8px;max-width:520px}
+.mbtn{display:flex;align-items:center;gap:12px;min-height:56px;padding:8px 16px;border:2px solid var(--line);border-radius:12px;background:var(--surface);font-weight:600;font-size:16px;text-align:left}
+.mbtn[aria-pressed="true"]{border-color:var(--accent)}
+.tick{flex:none;width:24px;height:24px;border:2px solid var(--muted);border-radius:6px;display:grid;place-items:center}
+.mbtn[aria-pressed="true"] .tick{background:var(--accent);border-color:var(--accent)}
+.mbtn[aria-pressed="true"] .tick::after{content:"";width:6px;height:11px;border:solid var(--on-accent);border-width:0 3px 3px 0;transform:translateY(-1px) rotate(45deg)}
+h2.sec{font-family:var(--f-display);font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:24px 0 8px}
+.menu{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.card-h{display:flex;gap:14px;align-items:center}
+.ico{flex:none;width:64px;height:54px}
+.card h3{margin:0;font-size:17px;font-weight:600;line-height:1.25;text-wrap:balance}
+.price{font-family:var(--f-display);font-weight:700;font-size:30px;line-height:1;font-variant-numeric:tabular-nums}
+.price small{font-size:15px;font-weight:600;color:var(--muted);margin-left:4px}
+.card-f{display:grid;grid-template-columns:1fr;gap:8px}
+.btn{min-height:48px;padding:8px 14px;border-radius:10px;border:2px solid var(--line);background:var(--surface);font-weight:600}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn.pri:disabled{background:var(--line);border-color:var(--line);color:var(--muted);cursor:not-allowed}
+.btn.wide{width:100%;min-height:54px;font-size:17px;font-family:var(--f-display);font-weight:700}
+.hint{color:var(--muted);font-size:14px;margin:0}
+
+/* order panel */
+.order{background:var(--surface);border:1px solid var(--line);border-radius:16px;position:sticky;top:calc(env(safe-area-inset-top,0px) + 76px);display:flex;flex-direction:column;max-height:calc(100dvh - 100px)}
+.o-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.o-head b{font-family:var(--f-display);font-size:18px}
+.badge{display:inline-block;font-size:12px;font-weight:600;padding:2px 10px;border-radius:99px;background:var(--line)}
+.badge.take{background:var(--accent);color:var(--on-accent)}
+.o-close{display:none}
+.cust{padding:10px 16px 0}
+.cin{width:100%;min-height:44px;padding:6px 12px;border:2px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);font:inherit}
+.who{text-align:center;font-weight:600;font-size:18px;margin-top:4px}
+.cn{color:var(--ink);font-weight:600}
+.lines{list-style:none;margin:0;padding:0 16px;overflow-y:auto;flex:1;min-height:80px}
+.line{display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px dashed var(--line)}
+.line:last-child{border-bottom:0}
+.l-main{min-width:0}
+.l-name{font-weight:600}
+.l-add{font-size:13px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center}
+.tag{font-size:11px;font-weight:700;background:var(--promo);color:var(--on-promo);padding:0 7px;border-radius:4px;line-height:18px}
+.l-side{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex:none}
+.l-total{font-family:var(--f-display);font-weight:700;font-variant-numeric:tabular-nums}
+.stepper{display:inline-flex;align-items:center;border:2px solid var(--line);border-radius:10px;overflow:hidden}
+.stepper button{width:40px;height:38px;border:0;background:transparent;font-size:20px;line-height:1}
+.stepper span{min-width:30px;text-align:center;font-family:var(--f-display);font-weight:700;font-variant-numeric:tabular-nums}
+.empty{padding:28px 8px;text-align:center;color:var(--muted)}
+.o-foot{padding:14px 16px 16px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
+.sum{display:flex;justify-content:space-between;align-items:baseline}
+.sum b{font-family:var(--f-display);font-size:32px;font-variant-numeric:tabular-nums}
+.bar{display:none}
+.scrim{display:none}
+
+/* sheets */
+.ov{position:fixed;inset:0;z-index:20;background:rgba(10,14,12,.55);display:flex;align-items:flex-end;justify-content:center}
+.ov[hidden]{display:none}
+.sheet{background:var(--surface);width:100%;max-width:520px;max-height:92dvh;overflow-y:auto;border-radius:18px 18px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px))}
+@media(min-width:640px){.ov{align-items:center}.sheet{border-radius:18px}}
+.s-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:8px}
+.s-head h3{margin:0;font-family:var(--f-display);font-size:20px;line-height:1.25}
+.x{flex:none;width:40px;height:40px;border-radius:10px;border:0;background:var(--line);font-size:20px;line-height:1}
+.grp{font-family:var(--f-display);font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:16px 0 4px;display:flex;align-items:center;gap:8px}
+.opt{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--line)}
+.opt:last-of-type{border-bottom:0}
+.opt-n{min-width:0}
+.opt-n b{font-weight:600}
+.opt-n small{display:block;color:var(--muted);font-size:13px}
+.opt .stepper button{width:44px;height:42px}
+.qrow{display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding-top:12px;border-top:2px solid var(--line)}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-block:12px}
+.seg .btn[aria-pressed="true"]{border-color:var(--accent)}
+.qk{display:flex;flex-wrap:wrap;gap:8px;margin-block:10px}
+.qk .btn{min-height:44px;padding-inline:14px}
+.field{width:100%;min-height:56px;font-family:var(--f-display);font-weight:700;font-size:26px;padding:6px 14px;border-radius:12px;border:2px solid var(--line);background:var(--bg);color:var(--ink);font-variant-numeric:tabular-nums}
+.vegs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-block:6px}
+.vegs .mbtn{min-height:52px;font-size:15px;padding:8px 12px}
+.pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-block:10px}
+.pad .btn{min-height:56px;font-family:var(--f-display);font-size:22px;font-weight:700}
+.chg{min-height:36px;margin-block:10px;font-family:var(--f-display);font-weight:700;font-size:22px}
+.chg.ok{color:var(--good)}
+.chg.short{color:var(--bad)}
+.queue{text-align:center;padding:8px 0 4px}
+.queue small{display:block;color:var(--muted);font-weight:600}
+.queue b{font-family:var(--f-display);font-size:72px;line-height:1.05;font-weight:700}
+.rcpt{list-style:none;margin:12px 0;padding:12px 0;border-block:1px dashed var(--line)}
+.rcpt li{display:flex;justify-content:space-between;gap:12px;padding:3px 0}
+.kv{display:flex;justify-content:space-between;padding:2px 0}
+.kv.big{font-family:var(--f-display);font-weight:700;font-size:20px}
+
+/* summary */
+.report{padding-top:16px;max-width:760px}
+.rev{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px 20px}
+.rev small{color:var(--muted);font-weight:600}
+.rev .big{font-family:var(--f-display);font-weight:700;font-size:48px;line-height:1.1;font-variant-numeric:tabular-nums}
+.facts{display:flex;flex-wrap:wrap;gap:6px 24px;margin-top:6px;color:var(--muted)}
+.facts b{color:var(--ink);font-family:var(--f-display);font-variant-numeric:tabular-nums}
+table{width:100%;border-collapse:collapse}
+.tw{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:14px}
+th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+tr:last-child td{border-bottom:0}
+td.r,th.r{text-align:right;font-family:var(--f-display);font-variant-numeric:tabular-nums}
+.bills{display:flex;flex-direction:column;gap:8px}
+details{background:var(--surface);border:1px solid var(--line);border-radius:12px}
+summary{list-style:none;display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;min-height:52px}
+summary::-webkit-details-marker{display:none}
+summary .no{font-family:var(--f-display);font-weight:700;font-size:18px;min-width:44px}
+summary .meta{flex:1;min-width:0;color:var(--muted);font-size:14px}
+summary .amt{font-family:var(--f-display);font-weight:700;font-variant-numeric:tabular-nums}
+.bd{padding:0 14px 14px}
+.del{margin-top:10px;min-height:44px;border:2px solid var(--line);border-radius:10px;background:transparent;padding:6px 14px;font-weight:600}
+.del.arm{border-color:var(--bad);color:var(--bad)}
+
+.toast{position:fixed;left:50%;bottom:calc(88px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:99px;font-weight:600;z-index:30;white-space:normal;text-align:center;width:max-content;max-width:calc(100vw - 32px);border-radius:16px}
+.toast[hidden]{display:none}
+
+@media(max-width:859px){
+  .sell{grid-template-columns:minmax(0,1fr)}
+  .order{position:fixed;left:0;right:0;bottom:0;top:auto;z-index:15;border-radius:18px 18px 0 0;max-height:82dvh;transform:translateY(105%);transition:transform .22s ease;padding-bottom:env(safe-area-inset-bottom,0px)}
+  .order.open{transform:none}
+  .o-close{display:block}
+  .scrim.open{display:block;position:fixed;inset:0;z-index:14;background:rgba(10,14,12,.45)}
+  .bar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:10;background:var(--surface);border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));gap:12px;align-items:center}
+  .bar-i{flex:1;min-width:0}
+  .bar-i small{display:block;color:var(--muted);font-size:13px}
+  .bar-i b{font-family:var(--f-display);font-size:24px;font-variant-numeric:tabular-nums}
+  .bar .btn{min-width:150px}
+}
+@media(prefers-reduced-motion:reduce){.order{transition:none}}
+.sumbar{display:flex;justify-content:flex-end;margin-bottom:12px}
+.sumbar .btn{min-height:48px}
+.ponly{display:none}
+@media print{
+  :root:root:root{--bg:#fff;--surface:#fff;--ink:#000;--muted:#444;--line:#bbb;color-scheme:light}
+  body{padding:0;background:#fff;font-size:13px}
+  .top,.bar,.scrim,.toast,.ov,.order,#v-sell,.sumbar,.del{display:none!important}
+  .wrap{max-width:none}
+  .report{padding-top:0;max-width:none}
+  .ponly{display:block;margin:0 0 10px}
+  .rev,.tw,details{border-color:#999;break-inside:avoid}
+  .rev .big{font-size:36px}
+}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><b>สแมชเบอร์เกอร์</b><span id="today"></span></div>
+    <nav class="tabs" role="tablist" aria-label="หน้าหลัก">
+      <button class="tab" role="tab" id="t-sell" data-act="tab" data-t="sell" aria-selected="true">ขาย</button>
+      <button class="tab" role="tab" id="t-sum" data-act="tab" data-t="sum" aria-selected="false">ยอดวันนี้<i id="t-count" hidden>0</i></button>
+    </nav>
+  </header>
+
+  <main id="v-sell" class="sell">
+    <section aria-label="เมนู">
+      <div class="mode" role="group" aria-label="รับอาหารแบบไหน">
+        <button class="mbtn" id="m-dine" data-act="mode" data-m="dine" aria-pressed="true"><span class="tick"></span>ทานที่ร้าน</button>
+        <button class="mbtn" id="m-take" data-act="mode" data-m="take" aria-pressed="false"><span class="tick"></span>กลับบ้าน</button>
+      </div>
+      <h2 class="sec">เมนู</h2>
+      <div class="menu" id="menu"></div>
+      <p class="hint" style="margin-top:12px">แตะ “เพิ่มเลย” เพื่อใส่ออเดอร์ทันที แล้วเลือกผัก ไข่ ชีส เบคอน เพิ่มแพตตี้ (ราคาโปรหรือราคาปกติ) ต่อได้เลย (กด × ถ้าไม่เอาเพิ่ม)</p>
+    </section>
+
+    <aside class="order" id="order" aria-label="ออเดอร์ปัจจุบัน">
+      <div class="o-head">
+        <div><b>ออเดอร์ <span class="num" id="o-no">#1</span></b> <span class="badge" id="o-mode">ทานที่ร้าน</span></div>
+        <button class="x o-close" data-act="toggleOrder" aria-label="ปิดออเดอร์">×</button>
+      </div>
+      <div class="cust"><input id="cust" class="cin" type="text" maxlength="30" placeholder="ชื่อลูกค้า (ไม่ใส่ก็ได้)" autocomplete="off" aria-label="ชื่อลูกค้า"></div>
+      <ul class="lines" id="lines"></ul>
+      <div class="o-foot">
+        <div class="sum"><span>รวมทั้งหมด</span><b id="o-total">฿0</b></div>
+        <button class="btn pri wide" id="o-pay" data-act="pay" disabled>ชำระเงิน</button>
+        <button class="btn wide" id="o-print" data-act="printCart" disabled>🖨 พิมพ์ใบออเดอร์ให้เชฟ</button>
+        <button class="del" id="o-pset" data-act="pset" style="margin-top:0;min-height:36px;font-weight:500;font-size:13px"></button>
+        <button class="del" id="o-clear" data-act="clear" hidden style="margin-top:0">ล้างออเดอร์</button>
+      </div>
+    </aside>
+  </main>
+
+  <main id="v-sum" class="report" hidden></main>
+</div>
+
+<div class="scrim" id="scrim" data-act="toggleOrder"></div>
+<div class="bar" id="bar">
+  <div class="bar-i"><small id="bar-s">ยังไม่มีรายการ</small><b id="bar-t">฿0</b></div>
+  <button class="btn pri" data-act="toggleOrder">ดูออเดอร์</button>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+<div class="ov" id="ov" hidden><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
+
+<script>
+(function(){
+  var BURGER={
+    beef:{name:'สแมชเบอร์เกอร์เนื้อ',short:'เนื้อ',price:99},
+    pork:{name:'สแมชเบอร์เกอร์หมู',short:'หมู',price:89}
+  };
+  var VEG=['ผักกาดแก้ว','หอมหัวใหญ่','มะเขือเทศ','แตงกวาดอง'];
+  var REG_KEYS=['beef','pork'];
+  var ADD={
+    pBeef:{name:'เพิ่มแพตตี้เนื้อ (โปร)',price:21,patty:true,promo:true},
+    pPork:{name:'เพิ่มแพตตี้หมู (โปร)',price:11,patty:true,promo:true},
+    beef:{name:'เพิ่มแพตตี้เนื้อ',price:49,patty:true},
+    pork:{name:'เพิ่มแพตตี้หมู',price:39,patty:true},
+    egg:{name:'เพิ่มไข่',price:10},
+    cheese:{name:'เพิ่มชีส',price:10},
+    bacon:{name:'เพิ่มเบคอน',price:15}
+  };
+  var EXTRA_KEYS=['pBeef','pPork','beef','pork','egg','cheese','bacon'];
+
+  function load(k,d){try{var v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}}
+  function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+  var orders=load('smash.orders',[]);
+  var counter=load('smash.counter',{d:'',n:0});
+  var cart=[], cust='', mode='dine', tab='sell', draft=null, pay=null, toastT=null;
+  function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+
+  var $=function(id){return document.getElementById(id)};
+  var fmt=function(n){return '฿'+Number(n).toLocaleString('en-US')};
+  function dayKey(d){d=d||new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+  function hhmm(ts){var d=new Date(ts);return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')}
+  function modeLabel(m){return m==='take'?'กลับบ้าน':'ทานที่ร้าน'}
+  function peekNo(){return counter.d===dayKey()?counter.n+1:1}
+
+  function addSum(add){var s=0;for(var k in add)s+=ADD[k].price*add[k];return s}
+  function unit(l){return BURGER[l.b].price+addSum(l.add)}
+  function cartTotal(){return cart.reduce(function(s,l){return s+unit(l)*l.qty},0)}
+  function cartCount(){return cart.reduce(function(s,l){return s+l.qty},0)}
+  function sig(b,add,veg){return b+'|'+Object.keys(add).sort().map(function(k){return k+':'+add[k]}).join(',')+'|'+(veg||[]).slice().sort().join(',')}
+  function vegRow(veg){return veg&&veg.length?'<div class="l-add">ผัก: '+veg.join(', ')+'</div>':''}
+
+  function icon(b){
+    var pat=(b==='beef'||b==='pBeef')?'var(--beef)':'var(--pork)';
+    var dbl=BURGER[b].promo;
+    return '<svg class="ico" viewBox="0 0 64 54" aria-hidden="true">'+
+      '<path d="M8 22C8 10 19 3 32 3s24 7 24 19z" fill="var(--bun)"/>'+
+      '<rect x="5" y="25" width="54" height="'+(dbl?6:10)+'" rx="3" fill="'+pat+'"/>'+
+      (dbl?'<rect x="5" y="32" width="54" height="6" rx="3" fill="'+pat+'"/>':'')+
+      '<path d="M8 38h48c0 8-5 13-12 13H20c-7 0-12-5-12-13z" fill="var(--bun)"/></svg>';
+  }
+
+  /* ---------- menu ---------- */
+  function renderMenu(){
+    function card(b){
+      var x=BURGER[b];
+      return '<div class="card"><div class="card-h">'+icon(b)+'<div><h3>'+(x.promo?'<span class="tag">โปร</span> ':'')+x.name+'</h3><div class="price">'+x.price+'<small>บาท</small></div>'+(x.note?'<div class="hint" style="margin-top:4px">'+x.note+'</div>':'')+'</div></div>'+
+        '<div class="card-f"><button class="btn pri" data-act="quick" data-b="'+b+'">+ เพิ่มเลย</button></div></div>';
+    }
+    $('menu').innerHTML=REG_KEYS.map(card).join('');
+  }
+
+  /* ---------- order panel ---------- */
+  function addLine(b,qty,add,veg){
+    var clean={};for(var k in add)if(add[k]>0)clean[k]=add[k];
+    veg=(veg||[]).slice();
+    var s=sig(b,clean,veg);
+    for(var i=0;i<cart.length;i++){if(sig(cart[i].b,cart[i].add,cart[i].veg)===s){cart[i].qty+=qty;return}}
+    cart.push({b:b,qty:qty,add:clean,veg:veg});
+  }
+  function addRows(add){
+    return Object.keys(add).map(function(k){
+      var a=ADD[k];
+      return '<div class="l-add">'+(a.promo?'<span class="tag">โปร</span>':'')+a.name+' ×'+add[k]+' <span class="num">+'+fmt(a.price*add[k])+'</span></div>';
+    }).join('');
+  }
+  function renderOrder(){
+    var n=cartCount(), t=cartTotal();
+    $('o-no').textContent='#'+peekNo();
+    var mb=$('o-mode');mb.textContent=modeLabel(mode);mb.className='badge'+(mode==='take'?' take':'');
+    if($('cust').value!==cust)$('cust').value=cust;
+    $('m-dine').setAttribute('aria-pressed',mode==='dine');
+    $('m-take').setAttribute('aria-pressed',mode==='take');
+    $('lines').innerHTML=cart.length?cart.map(function(l,i){
+      return '<li class="line"><div class="l-main"><div class="l-name">'+BURGER[l.b].name+' <span class="num" style="color:var(--muted);font-weight:500">'+fmt(BURGER[l.b].price)+'</span></div>'+vegRow(l.veg)+addRows(l.add)+'</div>'+
+        '<div class="l-side"><div class="l-total">'+fmt(unit(l)*l.qty)+'</div>'+
+        '<div class="stepper"><button data-act="ldec" data-i="'+i+'" aria-label="ลด">−</button><span>'+l.qty+'</span><button data-act="linc" data-i="'+i+'" aria-label="เพิ่ม">+</button></div></div></li>';
+    }).join(''):'<li class="empty">ยังไม่มีรายการ<br>แตะเมนูเพื่อเริ่มออเดอร์</li>';
+    $('o-total').textContent=fmt(t);
+    $('o-pay').disabled=!n;
+    $('o-print').disabled=!n||printing;    $('o-pset').textContent='เครื่องพิมพ์ '+PW+' มม. · '+(pchar&&printer&&printer.gatt&&printer.gatt.connected?'เชื่อมต่อแล้ว':'ยังไม่เชื่อมต่อ')+' · ตั้งค่า';
+    $('o-pay').textContent=n?'ชำระเงิน '+fmt(t):'ชำระเงิน';
+    $('o-clear').hidden=!n;
+    $('bar-s').textContent=n?n+' ชิ้น · '+modeLabel(mode):'ยังไม่มีรายการ';
+    $('bar-t').textContent=fmt(t);
+  }
+  function toast(msg,ms){
+    var el=$('toast');el.textContent=msg;el.hidden=false;
+    clearTimeout(toastT);toastT=setTimeout(function(){el.hidden=true},ms||1400);
+  }
+  function toggleOrder(force){
+    var o=$('order'),s=$('scrim');
+    var open=typeof force==='boolean'?force:!o.classList.contains('open');
+    o.classList.toggle('open',open);s.classList.toggle('open',open);
+  }
+
+  /* ---------- sheets ---------- */
+  function openSheet(html){$('sheet').innerHTML=html;$('ov').hidden=false;$('sheet').scrollTop=0}
+  function closeSheet(){$('ov').hidden=true;draft=null;pay=null}
+
+  function optRow(k){
+    var a=ADD[k],q=draft.add[k]||0;
+    return '<div class="opt"><div class="opt-n">'+(a.promo?'<span class="tag">โปร</span> ':'')+'<b>'+a.name+'</b> <span class="num">'+fmt(a.price)+'</span>'+(a.patty?'<small>ใส่ในเบอร์เกอร์ชิ้นเดิม ไม่ใช่เบอร์เกอร์เพิ่ม</small>':'')+'</div>'+
+      '<div class="stepper"><button data-act="odec" data-k="'+k+'" aria-label="ลด '+a.name+'">−</button><span>'+q+'</span><button data-act="oinc" data-k="'+k+'" aria-label="เพิ่ม '+a.name+'">+</button></div></div>';
+  }
+  function renderOpt(){
+    var b=BURGER[draft.b], tot=(b.price+addSum(draft.add))*draft.qty;
+    openSheetKeepScroll('<div class="s-head"><h3>'+b.name+'<br><span class="num" style="color:var(--muted);font-size:16px">'+fmt(b.price)+'</span></h3><button class="x" data-act="close" aria-label="ปิด">×</button></div>'+
+      '<div class="grp">ผัก (ติ๊กที่ต้องการ)</div><div class="vegs">'+VEG.map(function(v){
+        var on=draft.veg.indexOf(v)>-1;
+        return '<button class="mbtn" data-act="vtog" data-v="'+v+'" aria-pressed="'+on+'"><span class="tick"></span>'+v+'</button>'}).join('')+'</div>'+
+      '<div class="grp">เพิ่มเติม</div>'+EXTRA_KEYS.map(optRow).join('')+
+      '<div class="qrow"><b>จำนวนเบอร์เกอร์</b><div class="stepper"><button data-act="qdec" aria-label="ลด">−</button><span>'+draft.qty+'</span><button data-act="qinc" aria-label="เพิ่ม">+</button></div></div>'+
+      '<button class="btn pri wide" style="margin-top:16px" data-act="oadd">'+(draft.quick?'ยืนยัน · ':'เพิ่มลงออเดอร์ · ')+fmt(tot)+'</button>');
+  }
+  function openSheetKeepScroll(html){var st=$('sheet').scrollTop;openSheet(html);$('sheet').scrollTop=st}
+
+  function renderPay(){
+    var t=cartTotal();
+    openSheetKeepScroll('<div class="s-head"><h3>ชำระเงิน<br><span class="badge'+(mode==='take'?' take':'')+'">'+modeLabel(mode)+'</span></h3><button class="x" data-act="close" aria-label="ปิด">×</button></div>'+
+      '<div class="kv big"><span>ยอดที่ต้องจ่าย</span><span>'+fmt(t)+'</span></div>'+
+      '<div class="seg"><button class="btn" data-act="method" data-m="cash" aria-pressed="'+(pay.method==='cash')+'">เงินสด</button>'+
+      '<button class="btn" data-act="method" data-m="transfer" aria-pressed="'+(pay.method==='transfer')+'">โอน / QR</button></div>'+
+      (pay.method==='cash'?
+        '<div class="hint">รับเงินมา (บาท)</div>'+
+        '<div class="field" id="recvd" aria-live="polite">'+(pay.recv||'0')+'</div>'+
+        '<div class="chg" id="chg"></div>'+
+        '<div class="qk"><button class="btn" data-act="recv" data-v="'+t+'">พอดี</button>'+
+        [20,50,100,500,1000].map(function(v){return '<button class="btn" data-act="recv" data-v="'+v+'">'+v+'</button>'}).join('')+'</div>'+
+        '<div class="pad">'+['7','8','9','4','5','6','1','2','3','00','0','⌫'].map(function(k){
+          return '<button class="btn" data-act="key" data-v="'+k+'" aria-label="'+(k==='⌫'?'ลบ':k)+'">'+k+'</button>'}).join('')+
+        '<button class="btn" data-act="key" data-v="C" style="grid-column:1/-1">ล้าง</button></div>'
+      :'<p class="hint" style="margin-block:12px">ลูกค้าโอนเข้าบัญชีร้านแล้ว กดยืนยันเมื่อเห็นยอดเข้า ระบบนี้บันทึกวิธีจ่ายไว้ในยอดวันนี้ ยังไม่ได้สร้าง QR ให้</p>')+
+      '<button class="btn pri wide" id="confirm" data-act="confirm">ยืนยันรับเงิน</button>');
+    updatePay();
+  }
+  function updatePay(){
+    var t=cartTotal(),c=$('confirm');
+    if(!c)return;
+    if(pay.method!=='cash'){c.disabled=false;return}
+    var r=Number(pay.recv)||0,el=$('chg');
+    if($('recvd'))$('recvd').textContent=r?fmt(r):'0';
+    if(r>=t){el.className='chg ok';el.textContent='เงินทอน '+fmt(r-t)}
+    else if(r>0){el.className='chg short';el.textContent='ยังขาดอีก '+fmt(t-r)}
+    else{el.className='chg';el.textContent=''}
+    c.disabled=r<t;
+  }
+
+  function confirmPay(){
+    var t=cartTotal(), r=pay.method==='cash'?Number(pay.recv)||0:t;
+    if(!cart.length||r<t)return;
+    var today=dayKey();
+    if(counter.d!==today)counter={d:today,n:0};
+    counter.n++;save('smash.counter',counter);
+    var o={id:Date.now(),no:counter.n,day:today,ts:Date.now(),cust:cust.trim(),mode:mode,method:pay.method,total:t,recv:r,change:r-t,
+      lines:cart.map(function(l){
+        return {name:BURGER[l.b].name,short:BURGER[l.b].short,price:BURGER[l.b].price,qty:l.qty,total:unit(l)*l.qty,veg:l.veg.slice(),
+          add:Object.keys(l.add).map(function(k){return {name:ADD[k].name,promo:!!ADD[k].promo,price:ADD[k].price,qty:l.add[k]}})};
+      })};
+    orders.push(o);save('smash.orders',orders);
+    cart=[];cust='';pay=null;draft=null;
+    renderOrder();renderBadge();toggleOrder(false);
+    renderReceipt(o);
+  }
+  function renderReceipt(o){
+    var rows=o.lines.map(function(l){
+      var adds=l.add.map(function(a){return '<li style="color:var(--muted);font-size:13px;padding-left:12px"><span>'+(a.promo?'[โปร] ':'')+a.name+' ×'+a.qty+'</span><span class="num">+'+fmt(a.price*a.qty*l.qty)+'</span></li>'}).join('');
+      var vg=l.veg&&l.veg.length?'<li style="color:var(--muted);font-size:13px;padding-left:12px"><span>ผัก: '+l.veg.join(', ')+'</span></li>':'';
+      return '<li><span>'+l.name+' ×'+l.qty+'</span><span class="num">'+fmt(l.price*l.qty)+'</span></li>'+vg+adds;
+    }).join('');
+    openSheet('<div class="queue"><small>ชำระแล้ว · เลขคิว</small><b>#'+o.no+'</b><span class="badge'+(o.mode==='take'?' take':'')+'">'+modeLabel(o.mode)+'</span></div>'+
+      (o.cust?'<div class="who">'+esc(o.cust)+'</div>':'')+
+      '<ul class="rcpt">'+rows+'</ul>'+
+      '<div class="kv big"><span>รวม</span><span>'+fmt(o.total)+'</span></div>'+
+      '<div class="kv"><span>'+(o.method==='cash'?'รับเงินสด':'โอน / QR')+'</span><span class="num">'+fmt(o.recv)+'</span></div>'+
+      (o.method==='cash'?'<div class="kv"><span>เงินทอน</span><span class="num">'+fmt(o.change)+'</span></div>':'')+
+      '<button class="btn wide" style="margin-top:16px" data-act="shareOrder" data-id="'+o.id+'">📤 แชร์ใบออเดอร์ให้เชฟ (LINE)</button>'+
+      '<button class="btn wide" style="margin-top:8px" data-act="printOrder" data-id="'+o.id+'">🖨 พิมพ์ใบออเดอร์ให้เชฟ</button>'+
+      '<button class="btn pri wide" style="margin-top:8px" data-act="close">ออเดอร์ถัดไป</button>');
+  }
+
+  /* ---------- summary ---------- */
+  function renderBadge(){
+    var n=orders.filter(function(o){return o.day===dayKey()}).length,b=$('t-count');
+    b.textContent=n;b.hidden=!n;
+  }
+  function renderSummary(){
+    var today=dayKey(),os=orders.filter(function(o){return o.day===today}).sort(function(a,b){return b.ts-a.ts});
+    var total=os.reduce(function(s,o){return s+o.total},0), n=os.length;
+    var byMode={dine:{n:0,t:0},take:{n:0,t:0}}, byPay={cash:0,transfer:0};
+    var items={}, adds={};
+    os.forEach(function(o){
+      byMode[o.mode].n++;byMode[o.mode].t+=o.total;byPay[o.method]+=o.total;
+      o.lines.forEach(function(l){
+        var it=items[l.name]||(items[l.name]={qty:0,amt:0});it.qty+=l.qty;it.amt+=l.price*l.qty;
+        l.add.forEach(function(a){
+          var key=(a.promo?'[โปร] ':'')+a.name,x=adds[key]||(adds[key]={qty:0,amt:0});
+          x.qty+=a.qty*l.qty;x.amt+=a.price*a.qty*l.qty;
+        });
+      });
+    });
+    function rows(map){
+      var ks=Object.keys(map).sort(function(a,b){return map[b].qty-map[a].qty});
+      return ks.map(function(k){return '<tr><td>'+k+'</td><td class="r">'+map[k].qty+'</td><td class="r">'+fmt(map[k].amt)+'</td></tr>'}).join('');
+    }
+    var nowTxt=new Date().toLocaleString('th-TH',{dateStyle:'long',timeStyle:'short'});
+    var h='<div class="sumbar"><button class="btn pri" id="pdfbtn" data-act="pdf">บันทึกยอดขายเป็น PDF</button></div>'+
+      '<div class="rev"><small>ยอดขายวันนี้</small><div class="big">'+fmt(total)+'</div>'+
+      '<div class="facts"><span><b>'+n+'</b> บิล</span><span>เฉลี่ย <b>'+fmt(n?Math.round(total/n):0)+'</b>/บิล</span>'+
+      '<span>เงินสด <b>'+fmt(byPay.cash)+'</b></span><span>โอน/QR <b>'+fmt(byPay.transfer)+'</b></span></div></div>';
+    if(!n){
+      h+='<p class="empty">ยังไม่มีบิลวันนี้<br>เมื่อกดยืนยันรับเงินที่หน้าขาย ยอดจะมาแสดงที่นี่</p>';
+    }else{
+      h+='<h2 class="sec">ทานที่ร้าน / กลับบ้าน</h2><div class="tw"><table><thead><tr><th>แบบ</th><th class="r">บิล</th><th class="r">ยอด</th></tr></thead><tbody>'+
+        '<tr><td>ทานที่ร้าน</td><td class="r">'+byMode.dine.n+'</td><td class="r">'+fmt(byMode.dine.t)+'</td></tr>'+
+        '<tr><td>กลับบ้าน</td><td class="r">'+byMode.take.n+'</td><td class="r">'+fmt(byMode.take.t)+'</td></tr></tbody></table></div>'+
+        '<h2 class="sec">ขายอะไรไปบ้าง</h2><div class="tw"><table><thead><tr><th>รายการ</th><th class="r">จำนวน</th><th class="r">ยอด</th></tr></thead><tbody>'+rows(items)+'</tbody></table></div>'+
+        (Object.keys(adds).length?'<h2 class="sec">แพตตี้/ท็อปปิ้งเพิ่ม (ไม่นับเป็นเบอร์เกอร์)</h2><div class="tw"><table><thead><tr><th>รายการ</th><th class="r">จำนวน</th><th class="r">ยอด</th></tr></thead><tbody>'+rows(adds)+'</tbody></table></div>':'')+
+        '<h2 class="sec">บิลวันนี้</h2><div class="bills">'+os.map(function(o){
+          var cnt=o.lines.reduce(function(s,l){return s+l.qty},0);
+          var det=o.lines.map(function(l){
+            return '<div class="kv"><span>'+l.name+' ×'+l.qty+'</span><span class="num">'+fmt(l.price*l.qty)+'</span></div>'+
+              (l.veg&&l.veg.length?'<div class="kv" style="color:var(--muted);font-size:13px;padding-left:12px"><span>ผัก: '+l.veg.join(', ')+'</span></div>':'')+
+              l.add.map(function(a){return '<div class="kv" style="color:var(--muted);font-size:13px;padding-left:12px"><span>'+(a.promo?'[โปร] ':'')+a.name+' ×'+a.qty+'</span><span class="num">+'+fmt(a.price*a.qty*l.qty)+'</span></div>'}).join('');
+          }).join('');
+          return '<details><summary><span class="no">#'+o.no+'</span><span class="meta">'+(o.cust?'<span class="cn">'+esc(o.cust)+'</span> · ':'')+hhmm(o.ts)+' · '+modeLabel(o.mode)+' · '+cnt+' ชิ้น · '+(o.method==='cash'?'เงินสด':'โอน/QR')+'</span><span class="amt">'+fmt(o.total)+'</span></summary>'+
+            '<div class="bd">'+det+'<button class="del" data-act="delbill" data-id="'+o.id+'">ลบบิลนี้</button></div></details>';
+        }).join('')+'</div>';
+    }
+    $('v-sum').innerHTML=h;
+  }
+
+  function setTab(t){
+    tab=t;
+    $('v-sell').hidden=t!=='sell';$('v-sum').hidden=t!=='sum';
+    $('t-sell').setAttribute('aria-selected',t==='sell');$('t-sum').setAttribute('aria-selected',t==='sum');
+    $('bar').style.display=t==='sell'?'':'none';
+    if(t==='sum')renderSummary();
+    else renderOrder();
+    window.scrollTo(0,0);
+  }
+
+  /* ---------- PDF ยอดขาย: วาดลงแคนวาส A4 แล้วรวมเป็นไฟล์ PDF ---------- */
+  function buildPdf(){
+    var today=dayKey(),os=orders.filter(function(o){return o.day===today}).sort(function(a,b){return a.ts-b.ts});
+    var total=os.reduce(function(s,o){return s+o.total},0),n=os.length;
+    var byMode={dine:{n:0,t:0},take:{n:0,t:0}},byPay={cash:0,transfer:0},items={},adds={};
+    os.forEach(function(o){
+      byMode[o.mode].n++;byMode[o.mode].t+=o.total;byPay[o.method]+=o.total;
+      o.lines.forEach(function(l){
+        var it=items[l.name]||(items[l.name]={qty:0,amt:0});it.qty+=l.qty;it.amt+=l.price*l.qty;
+        l.add.forEach(function(a){
+          var key=(a.promo?'[โปร] ':'')+a.name,x=adds[key]||(adds[key]={qty:0,amt:0});
+          x.qty+=a.qty*l.qty;x.amt+=a.price*a.qty*l.qty;
+        });
+      });
+    });
+    var W=1240,H=1754,M=70,K=1,pages=[],cx,y,INK='#161a18',MUTED='#5b665f',LINE='#c9cfcb',RED='#c93522';
+    function k(v){return Math.round(v*K)}
+    function newPage(){var c=document.createElement('canvas');c.width=W;c.height=H;cx=c.getContext('2d');cx.fillStyle='#fff';cx.fillRect(0,0,W,H);pages.push(c);y=M}
+    function font(w,s,d){cx.font=w+' '+k(s)+'px '+(d?'"Bai Jamjuree"':'"IBM Plex Sans Thai"')+',"Noto Sans Thai",sans-serif'}
+    function put(t,x,al,col){cx.textAlign=al||'left';cx.textBaseline='alphabetic';cx.fillStyle=col||INK;cx.fillText(t,x,y)}
+    function need(h){if(y+k(h)>H-M-30)newPage()}
+    function rule(col,w){cx.strokeStyle=col||LINE;cx.lineWidth=w||2;cx.beginPath();cx.moveTo(M,y);cx.lineTo(W-M,y);cx.stroke()}
+    function fit(t,max){if(cx.measureText(t).width<=max)return t;while(t.length>1&&cx.measureText(t+'…').width>max)t=t.slice(0,-1);return t+'…'}
+    function row(l,mid,r,o){o=o||{};need(o.h||46);font(o.w||400,o.s||26,o.d);
+      var x0=M+(o.ind||0),rightEdge=mid!=null?W-M-250-150:(r!=null?W-M-190:W-M);
+      put(fit(l,rightEdge-x0),x0,'left',o.c);
+      if(mid!=null)put(mid,W-M-250,'right',o.c);if(r!=null)put(r,W-M,'right',o.c);y+=k(o.h||46)}
+    function section(t,head){need(120);y+=k(30);font(600,22);put(t,M,'left',MUTED);y+=k(12);rule(INK,3);y+=k(34);
+      if(head){font(600,22);put(head[0],M,'left',MUTED);if(head[1])put(head[1],W-M-250,'right',MUTED);put(head[2],W-M,'right',MUTED);y+=k(12);rule();y+=k(30)}}
+    function table(map){Object.keys(map).sort(function(a,b){return map[b].qty-map[a].qty}).forEach(function(kk){row(kk,String(map[kk].qty),fmt(map[kk].amt))})}
+    function draw(){
+      pages=[];newPage();
+      font(700,46,true);put('สแมชเบอร์เกอร์',M,'left',INK);
+      font(500,26);put('สรุปยอดขาย',W-M,'right',RED);y+=k(50);
+      font(400,24);put(new Date().toLocaleDateString('th-TH',{weekday:'long',day:'numeric',month:'long',year:'numeric'})+' · สร้างไฟล์เมื่อ '+new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})+' น.',M,'left',MUTED);y+=k(26);rule(INK,4);y+=k(60);
+      font(500,24);put('ยอดขายรวมวันนี้',M,'left',MUTED);y+=k(120);
+      font(700,92,true);put(fmt(total),M,'left',INK);y+=k(55);
+      font(400,26);put(n+' บิล · เฉลี่ย '+fmt(n?Math.round(total/n):0)+' ต่อบิล',M,'left',MUTED);y+=k(20);
+      section('วิธีรับเงิน',['วิธี',null,'ยอด']);
+      row('เงินสด',null,fmt(byPay.cash));row('โอน / QR',null,fmt(byPay.transfer));
+      section('ทานที่ร้าน / กลับบ้าน',['แบบ','บิล','ยอด']);
+      row('ทานที่ร้าน',String(byMode.dine.n),fmt(byMode.dine.t));row('กลับบ้าน',String(byMode.take.n),fmt(byMode.take.t));
+      section('ขายอะไรไปบ้าง',['รายการ','จำนวน','ยอด']);table(items);
+      if(Object.keys(adds).length){section('แพตตี้/ท็อปปิ้งเพิ่ม (ไม่นับเป็นเบอร์เกอร์)',['รายการ','จำนวน','ยอด']);table(adds)}
+      section('รายการบิล');
+      os.forEach(function(o){
+        var cnt=o.lines.reduce(function(s,l){return s+l.qty},0);
+        need(100);
+        row('#'+o.no+(o.cust?'  '+o.cust:''),null,fmt(o.total),{w:600,h:40});
+        row(hhmm(o.ts)+' น. · '+modeLabel(o.mode)+' · '+cnt+' ชิ้น · '+(o.method==='cash'?'เงินสด':'โอน/QR'),null,null,{ind:24,c:MUTED,s:21,h:34});
+        o.lines.forEach(function(l){
+          row(l.name+' ×'+l.qty,null,fmt(l.price*l.qty),{ind:24,c:MUTED,s:23,h:36});
+          if(l.veg&&l.veg.length)row('ผัก: '+l.veg.join(', '),null,null,{ind:48,c:MUTED,s:21,h:32});
+          l.add.forEach(function(a){row((a.promo?'[โปร] ':'')+a.name+' ×'+a.qty,null,'+'+fmt(a.price*a.qty*l.qty),{ind:48,c:MUTED,s:21,h:32})});
+        });
+        y+=k(8);rule();y+=k(18);
+      });
+    }
+    /* ตัวหนังสือเล็กลง และย่อให้พอดี 1 หน้า (ไม่เล็กกว่า 0.62 ของขนาดเดิม) */
+    K=0.72;draw();
+    while(pages.length>1&&K>0.62){K=Math.max(0.62,K-0.04);draw()}
+    pages.forEach(function(c,i){var g=c.getContext('2d');g.font='400 18px "IBM Plex Sans Thai",sans-serif';g.fillStyle=MUTED;g.textAlign='right';g.fillText('หน้า '+(i+1)+'/'+pages.length,W-M,H-48)});
+    var doc=new window.jspdf.jsPDF({unit:'mm',format:'a4',compress:true});
+    pages.forEach(function(c,i){if(i)doc.addPage();doc.addImage(c.toDataURL('image/jpeg',0.92),'JPEG',0,0,210,297)});
+    return doc.output('blob');
+  }
+  /* บันทึกไฟล์: ใช้ระบบของ claude.ai ถ้ามี ไม่งั้น (เปิดหน้านี้เป็นไฟล์/เว็บเดี่ยว ๆ) ใช้ลิงก์ดาวน์โหลดของเบราว์เซอร์ */
+  async function getDl(){
+    var dl=null;
+    try{dl=window.claude&&window.claude.use?await window.claude.use('downloads'):null}catch(e){dl=null}
+    if(dl)return dl;
+    if(window.top!==window.self)return null;
+    return {save:function(o){
+      var a=document.createElement('a');a.href=URL.createObjectURL(o.data);a.download=o.filename;
+      document.body.appendChild(a);a.click();
+      setTimeout(function(){a.remove();URL.revokeObjectURL(a.href)},4000);
+      return Promise.resolve();
+    }};
+  }
+  var pdfBusy=false;
+  async function savePdf(btn){
+    if(pdfBusy)return;
+    var today=dayKey();
+    if(!orders.some(function(o){return o.day===today})){toast('ยังไม่มีบิลวันนี้');return}
+    if(!window.jspdf){toast('โหลดตัวสร้าง PDF ไม่ได้ ลองเปิดหน้านี้ใหม่');return}
+    var dl=null;
+    dl=await getDl();
+    if(!dl){toast('เครื่องนี้บันทึกไฟล์จากหน้านี้ไม่ได้');return}
+    pdfBusy=true;var label=btn.textContent;btn.disabled=true;btn.textContent='กำลังสร้าง PDF…';
+    try{
+      await Promise.all(['400 26px "IBM Plex Sans Thai"','500 26px "IBM Plex Sans Thai"','600 26px "IBM Plex Sans Thai"','700 46px "Bai Jamjuree"'].map(function(f){return document.fonts.load(f,'กขค')}));
+      var blob=buildPdf();
+      await dl.save({filename:'ยอดขาย-'+today+'.pdf',data:blob});
+      toast('บันทึกไฟล์ PDF แล้ว');
+    }catch(err){
+      toast(err&&err.code==='declined'?'ยกเลิกการบันทึก':'บันทึก PDF ไม่สำเร็จ ลองอีกครั้ง');
+    }
+    pdfBusy=false;if(btn.isConnected){btn.disabled=false;btn.textContent=label}
+  }
+
+  /* ---------- พิมพ์ใบออเดอร์ให้เชฟ: วาดเป็นรูป (ตัวอักษรไทยชัวร์) แล้วส่ง ESC/POS ผ่าน Bluetooth LE ---------- */
+  var PW=load('smash.pw',58); if(PW!==80)PW=58;
+  var printer=null,pchar=null,printing=false;
+  var PSVC=['000018f0-0000-1000-8000-00805f9b34fb','0000ff00-0000-1000-8000-00805f9b34fb','0000ffe0-0000-1000-8000-00805f9b34fb',
+    '49535343-fe7d-4ae5-8fa9-9fafd205e455','e7810a71-73ae-499d-8c15-faa9aef0c3f2','0000fee7-0000-1000-8000-00805f9b34fb','0000ae30-0000-1000-8000-00805f9b34fb',
+    '0000fff0-0000-1000-8000-00805f9b34fb','0000ae00-0000-1000-8000-00805f9b34fb','0000fe00-0000-1000-8000-00805f9b34fb','0000ffb0-0000-1000-8000-00805f9b34fb',
+    '0000ff80-0000-1000-8000-00805f9b34fb','0000fea0-0000-1000-8000-00805f9b34fb','00001800-0000-1000-8000-00805f9b34fb','0000ff10-0000-1000-8000-00805f9b34fb',
+    '0000fd00-0000-1000-8000-00805f9b34fb','0000ffc0-0000-1000-8000-00805f9b34fb','0000ff20-0000-1000-8000-00805f9b34fb','0000ff30-0000-1000-8000-00805f9b34fb'];
+  var lastBtErr='',btBlocked=false;
+  function cartTicket(){
+    return {no:peekNo(),mode:mode,cust:cust.trim(),ts:Date.now(),
+      lines:cart.map(function(l){return {name:BURGER[l.b].name,qty:l.qty,veg:l.veg.slice(),
+        add:Object.keys(l.add).map(function(k){return {name:ADD[k].name,qty:l.add[k]}})}})};
+  }
+  function drawTicket(t,forShare){
+    var W=forShare?576:(PW===80?576:384),u=W/384,M=Math.round(8*u),H0=5000;
+    var c=document.createElement('canvas');c.width=W;c.height=H0;
+    var g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,W,H0);g.fillStyle='#000';g.textBaseline='alphabetic';
+    var y=Math.round(6*u);
+    function f(w,sz){g.font=w+' '+Math.round(sz*u)+'px "IBM Plex Sans Thai","Noto Sans Thai",sans-serif'}
+    function wrap(txt,max){
+      var out=[],cur='';
+      for(var i=0;i<txt.length;i++){
+        var ch=txt.charAt(i),nt=cur+ch;
+        var can=cur&&!/[ะ-ฺๅ-๎]/.test(ch)&&!/[เ-ไ]/.test(cur.charAt(cur.length-1));
+        if(g.measureText(nt).width>max&&can){out.push(cur);cur=ch}else cur=nt;
+      }
+      if(cur)out.push(cur);return out;
+    }
+    function center(txt,sz,w){f(w,sz);wrap(txt,W-2*M).forEach(function(s){y+=Math.round(sz*u*1.4);g.textAlign='center';g.fillText(s,W/2,y)})}
+    function para(txt,sz,w,ind){f(w,sz);wrap(txt,W-2*M-ind).forEach(function(s){y+=Math.round(sz*u*1.4);g.textAlign='left';g.fillText(s,M+ind,y)})}
+    function rule(){y+=Math.round(8*u);g.save();g.setLineDash([6,4]);g.lineWidth=2;g.beginPath();g.moveTo(M,y);g.lineTo(W-M,y);g.stroke();g.restore();y+=Math.round(6*u)}
+    center(t.title||('ออเดอร์ #'+t.no),44,700);
+    if(t.mode){
+      y+=Math.round(6*u);var bh=Math.round(46*u);g.fillRect(M,y,W-2*M,bh);
+      f(700,30);g.fillStyle='#fff';g.textAlign='center';g.fillText(modeLabel(t.mode),W/2,y+Math.round(bh*0.72));g.fillStyle='#000';y+=bh;
+    }
+    if(t.cust)center(t.cust,30,600);
+    var d=new Date(t.ts);
+    center(d.toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'})+' '+hhmm(t.ts)+' น.',22,400);
+    rule();
+    t.lines.forEach(function(l){
+      f(700,36);var qt=l.qty+'×',qw=Math.ceil(g.measureText(qt).width+10*u);
+      f(700,30);var nl=wrap(l.name,W-2*M-qw);
+      var base=y+Math.round(36*u*1.4);
+      f(700,36);g.textAlign='left';g.fillText(qt,M,base);
+      nl.forEach(function(s,i){f(700,30);y+=Math.round(30*u*1.4);if(i===0)y=Math.max(y,base);g.textAlign='left';g.fillText(s,M+qw,y)});
+      var ind=qw;
+      para(l.veg&&l.veg.length?'ผัก: '+l.veg.join(', '):'ไม่ใส่ผัก',24,500,ind);
+      (l.add||[]).forEach(function(a){para('+ '+a.name+(a.qty>1?' ×'+a.qty:''),24,600,ind)});
+      y+=Math.round(4*u);rule();
+    });
+    y+=Math.round(16*u);
+    var o=document.createElement('canvas');o.width=W;o.height=y;o.getContext('2d').drawImage(c,0,0);
+    return o;
+  }
+  function toRaster(c){
+    var W=c.width,H=c.height,wb=W/8,d=c.getContext('2d').getImageData(0,0,W,H).data,out=[0x1B,0x40];
+    for(var y0=0;y0<H;y0+=128){
+      var h=Math.min(128,H-y0);out.push(0x1D,0x76,0x30,0,wb&255,wb>>8,h&255,h>>8);
+      for(var y=y0;y<y0+h;y++)for(var xb=0;xb<wb;xb++){
+        var b=0;for(var k=0;k<8;k++){var i=(y*W+xb*8+k)*4;if(d[i]*0.3+d[i+1]*0.59+d[i+2]*0.11<150)b|=0x80>>k}
+        out.push(b);
+      }
+    }
+    out.push(0x1B,0x64,0x04);return new Uint8Array(out);
+  }
+  async function openPrinter(dev){
+    var server=null,ch=null,ce=null;
+    for(var tr=0;tr<3&&!server;tr++){
+      try{server=await dev.gatt.connect()}catch(e){ce=e;await new Promise(function(r){setTimeout(r,600)})}
+    }
+    if(!server)throw ce||{name:'NetworkError'};
+    for(var i=0;i<PSVC.length&&!ch;i++){
+      try{var svc=await server.getPrimaryService(PSVC[i]),cs=await svc.getCharacteristics();
+        for(var j=0;j<cs.length;j++){if(cs[j].properties.writeWithoutResponse||cs[j].properties.write){ch=cs[j];break}}}catch(e){}
+    }
+    if(!ch){try{dev.gatt.disconnect()}catch(e){}throw {code:'nochar'}}
+    printer=dev;pchar=ch;
+    if(!dev._smashL){dev._smashL=true;dev.addEventListener('gattserverdisconnected',function(){pchar=null;renderOrder()})}
+  }
+  async function connectPrinter(){
+    if(!navigator.bluetooth)throw {code:'nobt'};
+    var dev=await navigator.bluetooth.requestDevice({acceptAllDevices:true,optionalServices:PSVC});
+    await openPrinter(dev);
+  }
+  async function ensurePrinter(){
+    if(pchar&&printer&&printer.gatt.connected)return;
+    if(printer){try{await openPrinter(printer);return}catch(e){}}
+    await connectPrinter();
+  }
+  async function sendBytes(bytes){
+    var wr=!!pchar.properties.writeWithoutResponse;
+    for(var i=0;i<bytes.length;i+=100){
+      var part=bytes.slice(i,i+100);
+      if(wr)await pchar.writeValueWithoutResponse(part);else await pchar.writeValue(part);
+      await new Promise(function(r){setTimeout(r,wr?20:5)});
+    }
+  }
+  function btReason(err){
+    var n=err&&(err.code||err.name);
+    if(n==='nobt')return 'เครื่องนี้ไม่รองรับ Bluetooth ในหน้านี้';
+    if(n==='SecurityError'||n==='NotAllowedError')return 'หน้านี้พิมพ์ผ่าน Bluetooth ตรงไม่ได้ (เบราว์เซอร์ปิดกั้น)';
+    if(n==='nochar')return 'เครื่องพิมพ์นี้ไม่รองรับ (ต้องเป็นแบบ Bluetooth LE)';
+    return 'เชื่อมต่อเครื่องพิมพ์ไม่ได้ ('+((err&&(err.name||err.code))||'ไม่ทราบสาเหตุ')+')';
+  }
+  function btHelp(err){
+    var n=err&&(err.code||err.name);
+    if(n==='nochar')return 'เชื่อมต่อได้ แต่ไม่พบช่องส่งข้อมูลที่รู้จัก เครื่องพิมพ์รุ่นนี้อาจใช้ Bluetooth แบบธรรมดา (SPP) หรือใช้รหัสเฉพาะรุ่น';
+    if(n==='nobt'||n==='SecurityError'||n==='NotAllowedError')return 'เบราว์เซอร์ปิดกั้นไม่ให้หน้านี้ต่อ Bluetooth ตรงกับเครื่องพิมพ์ จึงพิมพ์ตรงไม่ได้\nวิธีที่ใช้ได้: กดปุ่ม "พิมพ์ใบออเดอร์" ระบบจะบันทึกใบออเดอร์เป็นรูป แล้วเอารูปไปพิมพ์ผ่านแอปของเครื่องพิมพ์ หรือส่งเข้า LINE ให้เชฟแทน';
+    return 'ต่อเครื่องพิมพ์ไม่ติด ลองทำทีละข้อ\n1) ปิดเครื่องพิมพ์ แล้วเปิดใหม่\n2) ไปที่ ตั้งค่า > Bluetooth ในมือถือ ถ้ามีชื่อเครื่องพิมพ์อยู่ในรายการ ให้กด "ลืมอุปกรณ์" หรือ "เลิกจับคู่"\n3) ปิดแอปอื่นที่ใช้เครื่องพิมพ์ตัวนี้อยู่\n4) กลับมากด "ค้นหา / เชื่อมต่อเครื่องพิมพ์" ใหม่\n(รหัสปัญหา: '+((err&&(err.name||err.code))||'ไม่ทราบ')+')';
+  }
+  var sharing=false;
+  async function shareTicket(t,btn){
+    if(sharing||printing)return;sharing=true;
+    var label=btn?btn.textContent:'';if(btn){btn.disabled=true;btn.textContent='กำลังเตรียมรูป…'}
+    try{
+      try{await Promise.all(['400','500','600','700'].map(function(w){return document.fonts.load(w+' 30px "IBM Plex Sans Thai"','กขค')}))}catch(e){}
+      var cv=drawTicket(t,true);
+      var big=document.createElement('canvas');big.width=cv.width+32;big.height=cv.height+32;
+      var g=big.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,big.width,big.height);g.drawImage(cv,16,16);
+      var blob=await new Promise(function(r){big.toBlob(r,'image/png')});
+      var name='ใบออเดอร์-'+(t.no||'ทดสอบ')+'.png',shared=false;
+      try{
+        var file=new File([blob],name,{type:'image/png'});
+        if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
+          await navigator.share({files:[file],title:'ใบออเดอร์ #'+(t.no||'')});shared=true;
+        }
+      }catch(err){
+        if(err&&err.name==='AbortError'){toast('ยกเลิกการแชร์',1500);return}
+      }
+      if(!shared){toast('แชร์จากหน้านี้ไม่ได้ จึงบันทึกเป็นรูปแทน',2600);await savePng(big,t)}
+    }finally{
+      sharing=false;
+      if(btn&&btn.isConnected){btn.textContent=label;btn.disabled=false}
+      renderOrder();
+    }
+  }
+  async function savePng(cv,t){
+    var dl=null;
+    dl=await getDl();
+    if(!dl){toast('บันทึกเป็นรูปไม่ได้จากหน้านี้',2600);return}
+    try{
+      var blob=await new Promise(function(r){cv.toBlob(r,'image/png')});
+      await dl.save({filename:'ใบออเดอร์-'+(t.no||'ทดสอบ')+'.png',data:blob});
+      toast('บันทึกใบออเดอร์เป็นรูปแล้ว',2000);
+    }catch(err){toast(err&&err.code==='declined'?'ยกเลิกการบันทึก':'บันทึกรูปไม่สำเร็จ',2000)}
+  }
+  async function printTicket(t,btn){
+    if(printing)return;printing=true;
+    var label=btn?btn.textContent:'';if(btn){btn.disabled=true;btn.textContent='กำลังพิมพ์…'}
+    var conn=true;
+    if(btBlocked)conn={name:'SecurityError'};
+    else{try{await ensurePrinter()}catch(err){conn=err||{};if(conn.name==='SecurityError'||conn.name==='NotAllowedError'||conn.code==='nobt')btBlocked=true}}
+    try{
+      try{await Promise.all(['400','500','600','700'].map(function(w){return document.fonts.load(w+' 30px "IBM Plex Sans Thai"','กขค')}))}catch(e){}
+      var cv=drawTicket(t);
+      if(conn===true){
+        try{await sendBytes(toRaster(cv));toast('ส่งใบออเดอร์ไปเครื่องพิมพ์แล้ว',2000)}
+        catch(err){pchar=null;toast('ส่งไปเครื่องพิมพ์ไม่สำเร็จ ลองอีกครั้ง',2400)}
+      }else if(conn.name==='NotFoundError'){
+        toast('ยกเลิกการเลือกเครื่องพิมพ์',1800);
+      }else{
+        lastBtErr=btHelp(conn);
+        toast(btReason(conn)+' จึงบันทึกเป็นรูปแทน',3000);
+        await savePng(cv,t);
+      }
+    }finally{
+      printing=false;
+      if(btn&&btn.isConnected){btn.textContent=label;btn.disabled=false}
+      renderOrder();
+    }
+  }
+  async function connectOnly(){
+    lastBtErr='';
+    try{await connectPrinter();toast('เชื่อมต่อ '+(printer&&printer.name||'เครื่องพิมพ์')+' แล้ว',2000)}
+    catch(err){
+      if(err&&err.name==='NotFoundError')toast('ยกเลิกการเลือกเครื่องพิมพ์',1800);
+      else{
+        lastBtErr=btHelp(err);toast(btReason(err),3000);
+        if(err&&(err.name==='SecurityError'||err.name==='NotAllowedError'||err.code==='nobt'))btBlocked=true;
+      }
+    }
+    if(!$('ov').hidden&&$('sheet').querySelector('[data-act="pconn"]'))renderPset();
+    renderOrder();
+  }
+  function renderPset(){
+    var on=printer&&printer.gatt&&printer.gatt.connected;
+    openSheetKeepScroll('<div class="s-head"><h3>เครื่องพิมพ์ใบออเดอร์</h3><button class="x" data-act="close" aria-label="ปิด">×</button></div>'+
+      '<div class="grp">ขนาดกระดาษ</div><div class="seg">'+
+      '<button class="btn" data-act="pw" data-w="58" aria-pressed="'+(PW===58)+'">58 มม.</button>'+
+      '<button class="btn" data-act="pw" data-w="80" aria-pressed="'+(PW===80)+'">80 มม.</button></div>'+
+      '<div class="grp">การเชื่อมต่อ</div><p class="hint">'+(on?'เชื่อมต่อกับ '+esc(printer.name||'เครื่องพิมพ์')+' แล้ว':'ยังไม่เชื่อมต่อ')+'</p>'+
+      '<button class="btn pri wide" style="margin-top:12px" data-act="pconn">'+(on?'เลือกเครื่องพิมพ์ตัวอื่น':'ค้นหา / เชื่อมต่อเครื่องพิมพ์')+'</button>'+
+      '<button class="btn wide" style="margin-top:8px" data-act="ptest">พิมพ์ทดสอบ</button>'+
+      (lastBtErr?'<p class="hint" style="margin-top:12px;color:var(--bad);white-space:pre-line">'+esc(lastBtErr)+'</p>':'')+
+      '<p class="hint" style="margin-top:12px">เปิดเครื่องพิมพ์ไว้ก่อนกดค้นหา ใช้ได้กับ Chrome บน Android/คอมพิวเตอร์ และเครื่องพิมพ์แบบ Bluetooth LE ถ้าเชื่อมต่อไม่ได้ ระบบจะบันทึกใบออเดอร์เป็นรูปให้แทน</p>');
+  }
+
+  /* ---------- events ---------- */
+  document.addEventListener('click',function(e){
+    var el=e.target.closest('[data-act]');if(!el)return;
+    var a=el.dataset.act;
+    if(a==='tab')setTab(el.dataset.t);
+    else if(a==='mode'){mode=el.dataset.m;renderOrder()}
+    else if(a==='vtog'){var vi=draft.veg.indexOf(el.dataset.v);if(vi>-1)draft.veg.splice(vi,1);else draft.veg.push(el.dataset.v);renderOpt()}
+    else if(a==='quick'){addLine(el.dataset.b,1,{},[]);renderOrder();draft={b:el.dataset.b,qty:1,add:{},veg:[],quick:true};renderOpt()}
+    else if(a==='open'){draft={b:el.dataset.b,qty:1,add:{},veg:[]};renderOpt()}
+    else if(a==='oinc'){var k=el.dataset.k;draft.add[k]=(draft.add[k]||0)+1;renderOpt()}
+    else if(a==='odec'){var k2=el.dataset.k;if(draft.add[k2]>0)draft.add[k2]--;renderOpt()}
+    else if(a==='qinc'){draft.qty++;renderOpt()}
+    else if(a==='qdec'){if(draft.qty>1)draft.qty--;renderOpt()}
+    else if(a==='oadd'){if(draft.quick){var ps=sig(draft.b,{},[]);for(var qi=0;qi<cart.length;qi++){if(sig(cart[qi].b,cart[qi].add,cart[qi].veg)===ps){cart[qi].qty--;if(cart[qi].qty<1)cart.splice(qi,1);break}}}addLine(draft.b,draft.qty,draft.add,draft.veg);var nm=BURGER[draft.b].name;closeSheet();renderOrder();toast('เพิ่ม '+nm+' แล้ว')}
+    else if(a==='linc'){cart[+el.dataset.i].qty++;renderOrder()}
+    else if(a==='ldec'){var i=+el.dataset.i;cart[i].qty--;if(cart[i].qty<1)cart.splice(i,1);renderOrder()}
+    else if(a==='clear'){cart=[];cust='';renderOrder();toggleOrder(false)}
+    else if(a==='toggleOrder')toggleOrder();
+    else if(a==='pay'){if(cart.length){pay={method:'cash',recv:''};renderPay()}}
+    else if(a==='method'){pay.method=el.dataset.m;renderPay()}
+    else if(a==='recv'){pay.recv=el.dataset.v;renderPay()}
+    else if(a==='key'){
+      var v=el.dataset.v,s=String(pay.recv||'');
+      if(v==='C')s='';else if(v==='⌫')s=s.slice(0,-1);else if(s.length<7)s=(s+v).replace(/^0+(?=\d)/,'');
+      pay.recv=s;updatePay();
+    }
+    else if(a==='pdf')savePdf(el);
+    else if(a==='shareOrder'){var so=orders.filter(function(o){return o.id===+el.dataset.id})[0];if(so)shareTicket(so,el)}
+    else if(a==='printCart'){if(cart.length)printTicket(cartTicket(),el)}
+    else if(a==='printOrder'){var po=orders.filter(function(o){return o.id===+el.dataset.id})[0];if(po)printTicket(po,el)}
+    else if(a==='pset')renderPset();
+    else if(a==='pw'){PW=+el.dataset.w===80?80:58;save('smash.pw',PW);renderPset();renderOrder()}
+    else if(a==='pconn')connectOnly();
+    else if(a==='ptest')printTicket({title:'ทดสอบเครื่องพิมพ์',ts:Date.now(),lines:[{name:'สแมชเบอร์เกอร์เนื้อ',qty:1,veg:['ผักกาดแก้ว','มะเขือเทศ'],add:[{name:'เพิ่มไข่',qty:1}]}]},el);
+    else if(a==='confirm')confirmPay();
+    else if(a==='close')closeSheet();
+    else if(a==='delbill'){
+      if(el.dataset.arm){
+        var id=+el.dataset.id;orders=orders.filter(function(o){return o.id!==id});save('smash.orders',orders);renderBadge();renderSummary();
+      }else{
+        el.dataset.arm='1';el.classList.add('arm');el.textContent='กดอีกครั้งเพื่อลบ';
+        setTimeout(function(){if(el.isConnected){delete el.dataset.arm;el.classList.remove('arm');el.textContent='ลบบิลนี้'}},3000);
+      }
+    }
+  });
+  document.addEventListener('input',function(e){
+    if(e.target.id==='recv'&&pay){pay.recv=e.target.value;updatePay()}
+    else if(e.target.id==='cust'){cust=e.target.value}
+  });
+  var opened=[];
+  window.addEventListener('beforeprint',function(){
+    opened=[];Array.prototype.forEach.call(document.querySelectorAll('#v-sum details'),function(d){if(!d.open){d.open=true;opened.push(d)}});
+  });
+  window.addEventListener('afterprint',function(){opened.forEach(function(d){d.open=false});opened=[]});
+  $('ov').addEventListener('click',function(e){if(e.target===$('ov'))closeSheet()});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'){if(!$('ov').hidden)closeSheet();else toggleOrder(false)}});
+
+  $('today').textContent=new Date().toLocaleDateString('th-TH',{weekday:'long',day:'numeric',month:'long'});
+  renderMenu();renderOrder();renderBadge();
+})();
+</script>
+
+</body></html>
