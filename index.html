@@ -333,7 +333,8 @@ summary .amt{font-family:var(--f-display);font-weight:700;font-variant-numeric:t
   function dayKey(d){d=d||new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
   function hhmm(ts){var d=new Date(ts);return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')}
   function modeLabel(m){return m==='take'?'กลับบ้าน':'ทานที่ร้าน'}
-  function peekNo(){return counter.d===dayKey()?counter.n+1:1}
+  function nextNo(day){day=day||dayKey();var used={};orders.forEach(function(o){if(!o.void&&o.day===day)used[o.no]=1});var n=1;while(used[n])n++;return n}
+  function peekNo(){return nextNo()}
 
   function addSum(add){var s=0;for(var k in add)s+=ADD[k].price*add[k];return s}
   function unit(l){return BURGER[l.b].price+addSum(l.add)}
@@ -462,9 +463,9 @@ summary .amt{font-family:var(--f-display);font-weight:700;font-variant-numeric:t
     var t=cartTotal(), r=pay.method==='cash'?Number(pay.recv)||0:t;
     if(!cart.length||r<t)return;
     var today=dayKey();
-    if(counter.d!==today)counter={d:today,n:0};
-    counter.n++;save('smash.counter',counter);
-    var o={id:Date.now(),no:counter.n,day:today,ts:Date.now(),cust:cust.trim(),mode:mode,method:pay.method,total:t,recv:r,change:r-t,
+    var no=nextNo(today);
+    counter={d:today,n:Math.max(no,counter.d===today?counter.n:0)};save('smash.counter',counter);
+    var o={id:Date.now(),no:no,day:today,ts:Date.now(),cust:cust.trim(),mode:mode,method:pay.method,total:t,recv:r,change:r-t,
       lines:cart.map(function(l){
         return {name:BURGER[l.b].name,short:BURGER[l.b].name,price:BURGER[l.b].price,qty:l.qty,total:unit(l)*l.qty,veg:l.veg.slice(),
           add:Object.keys(l.add).map(function(k){return {name:ADD[k].name,promo:!!ADD[k].promo,price:ADD[k].price,qty:l.add[k]}})};
@@ -1117,7 +1118,7 @@ summary .amt{font-family:var(--f-display);font-weight:700;font-variant-numeric:t
     else if(a==='close')closeSheet();
     else if(a==='rng'){rng=el.dataset.r;renderSummary()}
     else if(a==='voidbill'){var vid=+el.dataset.id;arm(el,'กดอีกครั้งเพื่อยกเลิกบิล',function(){var o=byId(vid);if(o){o.void=true;o.voidAt=Date.now();persistOrders();toast('ยกเลิกบิล #'+o.no+' แล้ว (กู้คืนได้ในรายการบิล)',2400)}})}
-    else if(a==='restore'){var rid=+el.dataset.id,ro=byId(rid);if(ro){delete ro.void;delete ro.voidAt;persistOrders();toast('กู้คืนบิล #'+ro.no+' แล้ว',1800)}}
+    else if(a==='restore'){var rid=+el.dataset.id,ro=byId(rid);if(ro){var clash=orders.some(function(o){return !o.void&&o.day===ro.day&&o.no===ro.no}),oldNo=ro.no;if(clash)ro.no=nextNo(ro.day);delete ro.void;delete ro.voidAt;persistOrders();toast(clash?'กู้คืนเป็นบิล #'+ro.no+' (เลข #'+oldNo+' ถูกใช้ไปแล้ว)':'กู้คืนบิล #'+ro.no+' แล้ว',2600)}}
     else if(a==='purge'){var pid=+el.dataset.id;arm(el,'กดอีกครั้งเพื่อลบถาวร',function(){orders=orders.filter(function(o){return o.id!==pid});persistOrders()})}
     else if(a==='editbill'){var eo=byId(+el.dataset.id);if(eo){edit={id:eo.id,cust:eo.cust||'',mode:eo.mode,method:eo.method,q:eo.lines.map(function(l){return l.qty})};renderEdit()}}
     else if(a==='eq'){var ei=+el.dataset.i,nq=edit.q[ei]+(+el.dataset.d);if(nq>=0&&nq<=99){edit.q[ei]=nq;renderEdit()}}
