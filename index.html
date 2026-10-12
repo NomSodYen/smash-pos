@@ -1,9 +1,8 @@
-<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><meta name="theme-color" content="#c93522"><link rel="manifest" href="manifest.json"><link rel="icon" type="image/png" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="สแมชเบอร์เกอร์"></head><body>
 <title>POS สแมชเบอร์เกอร์</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 /* Layout: ที่ขายอยู่ซ้าย (ปุ่มทานที่ร้าน/กลับบ้านอยู่บนสุด) ออเดอร์ติดขวา; บนมือถือออเดอร์เป็นแผ่นเลื่อนขึ้นจากแถบล่าง */
 :root{
@@ -179,21 +178,57 @@ summary .amt{font-family:var(--f-display);font-weight:700;font-variant-numeric:t
 @media print{
   :root:root:root{--bg:#fff;--surface:#fff;--ink:#000;--muted:#444;--line:#bbb;color-scheme:light}
   body{padding:0;background:#fff;font-size:13px}
-  .top,.bar,.scrim,.toast,.ov,.order,#v-sell,.sumbar,.del{display:none!important}
+  .top,.bar,.scrim,.toast,.ov,.order,#v-sell,#v-set,.sumbar,.del,.chips,.nudge{display:none!important}
   .wrap{max-width:none}
   .report{padding-top:0;max-width:none}
   .ponly{display:block;margin:0 0 10px}
   .rev,.tw,details{border-color:#999;break-inside:avoid}
   .rev .big{font-size:36px}
 }
+
+/* v7: ช่วงเวลา ตั้งค่า สำรองข้อมูล */
+.chips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 8px;margin-bottom:8px;scrollbar-width:thin}
+.chip{flex:none;min-height:44px;padding:6px 16px;border:2px solid var(--line);border-radius:99px;background:var(--surface);font-weight:600}
+.chip[aria-pressed="true"]{border-color:var(--accent);background:var(--accent);color:var(--on-accent)}
+.dpick{display:flex;align-items:center;gap:8px;flex:none}
+.dpick input{min-height:44px;width:auto;padding:4px 10px}
+.mbar{height:5px;background:var(--line);border-radius:3px;margin-top:4px;min-width:90px}
+.mbar i{display:block;height:100%;background:var(--accent);border-radius:3px}
+.nudge{background:var(--surface);border:2px solid var(--promo);border-radius:12px;padding:12px 14px;margin-bottom:12px;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.nudge span{flex:1;min-width:200px}
+.void{opacity:.6}
+.void .meta,.void .amt{text-decoration:line-through}
+.vtag{font-size:11px;font-weight:700;background:var(--bad);color:#fff;padding:0 7px;border-radius:4px;line-height:18px;margin-right:6px}
+.bd .acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.bd .acts .del{margin-top:0}
+.setsec{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-top:12px}
+.setsec h3{margin:0 0 4px;font-family:var(--f-display);font-size:18px}
+.mrow{display:grid;grid-template-columns:36px minmax(0,1fr) 92px auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.mrow:last-of-type{border-bottom:0}
+.mrow .cin{min-width:0}
+.mrow .sub{grid-column:2 / -1;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.mrow.v{grid-template-columns:36px minmax(0,1fr) auto}
+.mini{min-height:40px;padding:4px 12px;border:2px solid var(--line);border-radius:10px;background:var(--surface);font-weight:600;font-size:14px}
+.mini[aria-pressed="true"]{border-color:var(--accent);background:var(--accent);color:var(--on-accent)}
+.mini.up{width:36px;padding:0}
+.mini.dl{border-color:transparent;color:var(--bad)}
+.mini.dl.arm{border-color:var(--bad)}
+.mini:disabled{opacity:.35;cursor:not-allowed}
+.btnrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.btnrow .btn{flex:1;min-width:150px}
+.ok{color:var(--good);font-weight:600}
+.warn{color:var(--bad);font-weight:600}
+@media(max-width:480px){.mrow{grid-template-columns:32px minmax(0,1fr) 70px 36px;gap:6px}.mrow.v{grid-template-columns:32px minmax(0,1fr) 36px}.mrow .cin{padding-inline:8px}.mini.dl{padding:4px 4px}.mini.up{width:32px}}
+.net{font-size:12px;font-weight:700;background:var(--bad);color:#fff;border-radius:99px;padding:1px 10px;margin-left:8px;vertical-align:middle}
 </style>
 
 <div class="wrap">
   <header class="top">
-    <div class="brand"><b>สแมชเบอร์เกอร์</b><span id="today"></span></div>
+    <div class="brand"><b>สแมชเบอร์เกอร์<span class="net" id="net" hidden>ออฟไลน์</span></b><span id="today"></span></div>
     <nav class="tabs" role="tablist" aria-label="หน้าหลัก">
       <button class="tab" role="tab" id="t-sell" data-act="tab" data-t="sell" aria-selected="true">ขาย</button>
-      <button class="tab" role="tab" id="t-sum" data-act="tab" data-t="sum" aria-selected="false">ยอดวันนี้<i id="t-count" hidden>0</i></button>
+      <button class="tab" role="tab" id="t-sum" data-act="tab" data-t="sum" aria-selected="false">สรุปยอด<i id="t-count" hidden>0</i></button>
+      <button class="tab" role="tab" id="t-set" data-act="tab" data-t="set" aria-selected="false">ตั้งค่า</button>
     </nav>
   </header>
 
@@ -226,6 +261,7 @@ summary .amt{font-family:var(--f-display);font-weight:700;font-variant-numeric:t
   </main>
 
   <main id="v-sum" class="report" hidden></main>
+  <main id="v-set" class="report" hidden></main>
 </div>
 
 <div class="scrim" id="scrim" data-act="toggleOrder"></div>
@@ -233,33 +269,63 @@ summary .amt{font-family:var(--f-display);font-weight:700;font-variant-numeric:t
   <div class="bar-i"><small id="bar-s">ยังไม่มีรายการ</small><b id="bar-t">฿0</b></div>
   <button class="btn pri" data-act="toggleOrder">ดูออเดอร์</button>
 </div>
+<input type="file" id="impfile" accept=".json,.txt,application/json,text/plain" hidden>
 <div class="toast" id="toast" role="status" hidden></div>
 <div class="ov" id="ov" hidden><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
 
 <script>
 (function(){
-  var BURGER={
-    beef:{name:'สแมชเบอร์เกอร์เนื้อ',short:'เนื้อ',price:99},
-    pork:{name:'สแมชเบอร์เกอร์หมู',short:'หมู',price:89}
+  var BUILD='2026-10-12-v7';
+  var DEFAULT_MENU={
+    burgers:[
+      {id:'beef',name:'สแมชเบอร์เกอร์เนื้อ',price:99,meat:'beef'},
+      {id:'pork',name:'สแมชเบอร์เกอร์หมู',price:89,meat:'pork'}
+    ],
+    veg:['ผักกาดแก้ว','หอมหัวใหญ่','มะเขือเทศ','แตงกวาดอง'],
+    adds:[
+      {id:'pBeef',name:'เพิ่มแพตตี้เนื้อ (โปร)',price:21,patty:true,promo:true},
+      {id:'pPork',name:'เพิ่มแพตตี้หมู (โปร)',price:11,patty:true,promo:true},
+      {id:'beef',name:'เพิ่มแพตตี้เนื้อ',price:49,patty:true},
+      {id:'pork',name:'เพิ่มแพตตี้หมู',price:39,patty:true},
+      {id:'egg',name:'เพิ่มไข่',price:10},
+      {id:'cheese',name:'เพิ่มชีส',price:10},
+      {id:'bacon',name:'เพิ่มเบคอน',price:15}
+    ]
   };
-  var VEG=['ผักกาดแก้ว','หอมหัวใหญ่','มะเขือเทศ','แตงกวาดอง'];
-  var REG_KEYS=['beef','pork'];
-  var ADD={
-    pBeef:{name:'เพิ่มแพตตี้เนื้อ (โปร)',price:21,patty:true,promo:true},
-    pPork:{name:'เพิ่มแพตตี้หมู (โปร)',price:11,patty:true,promo:true},
-    beef:{name:'เพิ่มแพตตี้เนื้อ',price:49,patty:true},
-    pork:{name:'เพิ่มแพตตี้หมู',price:39,patty:true},
-    egg:{name:'เพิ่มไข่',price:10},
-    cheese:{name:'เพิ่มชีส',price:10},
-    bacon:{name:'เพิ่มเบคอน',price:15}
-  };
-  var EXTRA_KEYS=['pBeef','pPork','beef','pork','egg','cheese','bacon'];
-
+  var BURGER={},ADD={},VEG=[],REG_KEYS=[],EXTRA_KEYS=[];
   function load(k,d){try{var v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}}
   function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+  function clone(o){return JSON.parse(JSON.stringify(o))}
+  function cleanName(v,d){v=String(v==null?'':v).replace(/\s+/g,' ').trim().slice(0,60);return v||d}
+  function cleanPrice(v){v=Math.round(Number(v));return isFinite(v)&&v>=0?Math.min(v,99999):0}
+  function uid(p){return p+Date.now().toString(36)+Math.random().toString(36).slice(2,5)}
+  function sanitizeMenu(m){
+    if(!m||!Array.isArray(m.burgers)||!Array.isArray(m.adds)||!Array.isArray(m.veg))return null;
+    var seen={},out={burgers:[],veg:[],adds:[]};
+    function uniq(id,p){id=String(id||'');if(!id||seen[id])id=uid(p);seen[id]=1;return id}
+    m.burgers.forEach(function(b){if(b&&typeof b==='object')out.burgers.push({id:uniq(b.id,'b'),name:cleanName(b.name,'เบอร์เกอร์'),price:cleanPrice(b.price),meat:(b.meat==='beef'||b.meat==='pork')?b.meat:'other'})});
+    seen={};
+    m.adds.forEach(function(a){if(a&&typeof a==='object'){var x={id:uniq(a.id,'a'),name:cleanName(a.name,'ของเพิ่ม'),price:cleanPrice(a.price)};if(a.patty)x.patty=true;if(a.promo)x.promo=true;out.adds.push(x)}});
+    m.veg.forEach(function(v){v=cleanName(v,'');if(v&&out.veg.indexOf(v)<0)out.veg.push(v)});
+    if(!out.burgers.length)return null;
+    return out;
+  }
+  var menu=sanitizeMenu(load('smash.menu',null))||clone(DEFAULT_MENU);
+  function applyMenu(){
+    BURGER={};ADD={};REG_KEYS=[];EXTRA_KEYS=[];
+    menu.burgers.forEach(function(b){BURGER[b.id]=b;REG_KEYS.push(b.id)});
+    menu.adds.forEach(function(a){ADD[a.id]=a;EXTRA_KEYS.push(a.id)});
+    VEG=menu.veg.slice();
+    if(typeof cart!=='undefined'&&cart){
+      cart=cart.filter(function(l){return BURGER[l.b]});
+      cart.forEach(function(l){for(var k in l.add)if(!ADD[k])delete l.add[k]});
+    }
+  }
   var orders=load('smash.orders',[]);
+  if(!Array.isArray(orders))orders=[];
   var counter=load('smash.counter',{d:'',n:0});
-  var cart=[], cust='', mode='dine', tab='sell', draft=null, pay=null, toastT=null;
+  var cart=[], cust='', mode='dine', tab='sell', draft=null, pay=null, toastT=null, edit=null, rng='today', pickDay='', impData=null, installEv=null;
+  applyMenu();
   function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 
   var $=function(id){return document.getElementById(id)};
@@ -274,11 +340,11 @@ summary .amt{font-family:var(--f-display);font-weight:700;font-variant-numeric:t
   function cartTotal(){return cart.reduce(function(s,l){return s+unit(l)*l.qty},0)}
   function cartCount(){return cart.reduce(function(s,l){return s+l.qty},0)}
   function sig(b,add,veg){return b+'|'+Object.keys(add).sort().map(function(k){return k+':'+add[k]}).join(',')+'|'+(veg||[]).slice().sort().join(',')}
-  function vegRow(veg){return veg&&veg.length?'<div class="l-add">ผัก: '+veg.join(', ')+'</div>':''}
+  function vegRow(veg){return veg&&veg.length?'<div class="l-add">ผัก: '+veg.map(esc).join(', ')+'</div>':''}
 
   function icon(b){
-    var pat=(b==='beef'||b==='pBeef')?'var(--beef)':'var(--pork)';
-    var dbl=BURGER[b].promo;
+    var mt=BURGER[b].meat,pat=mt==='beef'?'var(--beef)':(mt==='pork'?'var(--pork)':'var(--muted)');
+    var dbl=false;
     return '<svg class="ico" viewBox="0 0 64 54" aria-hidden="true">'+
       '<path d="M8 22C8 10 19 3 32 3s24 7 24 19z" fill="var(--bun)"/>'+
       '<rect x="5" y="25" width="54" height="'+(dbl?6:10)+'" rx="3" fill="'+pat+'"/>'+
@@ -290,7 +356,7 @@ summary .amt{font-family:var(--f-display);font-weight:700;font-variant-numeric:t
   function renderMenu(){
     function card(b){
       var x=BURGER[b];
-      return '<div class="card"><div class="card-h">'+icon(b)+'<div><h3>'+(x.promo?'<span class="tag">โปร</span> ':'')+x.name+'</h3><div class="price">'+x.price+'<small>บาท</small></div>'+(x.note?'<div class="hint" style="margin-top:4px">'+x.note+'</div>':'')+'</div></div>'+
+      return '<div class="card"><div class="card-h">'+icon(b)+'<div><h3>'+(x.promo?'<span class="tag">โปร</span> ':'')+esc(x.name)+'</h3><div class="price">'+x.price+'<small>บาท</small></div>'+(x.note?'<div class="hint" style="margin-top:4px">'+x.note+'</div>':'')+'</div></div>'+
         '<div class="card-f"><button class="btn pri" data-act="quick" data-b="'+b+'">+ เพิ่มเลย</button></div></div>';
     }
     $('menu').innerHTML=REG_KEYS.map(card).join('');
@@ -307,7 +373,7 @@ summary .amt{font-family:var(--f-display);font-weight:700;font-variant-numeric:t
   function addRows(add){
     return Object.keys(add).map(function(k){
       var a=ADD[k];
-      return '<div class="l-add">'+(a.promo?'<span class="tag">โปร</span>':'')+a.name+' ×'+add[k]+' <span class="num">+'+fmt(a.price*add[k])+'</span></div>';
+      return '<div class="l-add">'+(a.promo?'<span class="tag">โปร</span>':'')+esc(a.name)+' ×'+add[k]+' <span class="num">+'+fmt(a.price*add[k])+'</span></div>';
     }).join('');
   }
   function renderOrder(){
@@ -318,7 +384,7 @@ summary .amt{font-family:var(--f-display);font-weight:700;font-variant-numeric:t
     $('m-dine').setAttribute('aria-pressed',mode==='dine');
     $('m-take').setAttribute('aria-pressed',mode==='take');
     $('lines').innerHTML=cart.length?cart.map(function(l,i){
-      return '<li class="line"><div class="l-main"><div class="l-name">'+BURGER[l.b].name+' <span class="num" style="color:var(--muted);font-weight:500">'+fmt(BURGER[l.b].price)+'</span></div>'+vegRow(l.veg)+addRows(l.add)+'</div>'+
+      return '<li class="line"><div class="l-main"><div class="l-name">'+esc(BURGER[l.b].name)+' <span class="num" style="color:var(--muted);font-weight:500">'+fmt(BURGER[l.b].price)+'</span></div>'+vegRow(l.veg)+addRows(l.add)+'</div>'+
         '<div class="l-side"><div class="l-total">'+fmt(unit(l)*l.qty)+'</div>'+
         '<div class="stepper"><button data-act="ldec" data-i="'+i+'" aria-label="ลด">−</button><span>'+l.qty+'</span><button data-act="linc" data-i="'+i+'" aria-label="เพิ่ม">+</button></div></div></li>';
     }).join(''):'<li class="empty">ยังไม่มีรายการ<br>แตะเมนูเพื่อเริ่มออเดอร์</li>';
@@ -342,19 +408,19 @@ summary .amt{font-family:var(--f-display);font-weight:700;font-variant-numeric:t
 
   /* ---------- sheets ---------- */
   function openSheet(html){$('sheet').innerHTML=html;$('ov').hidden=false;$('sheet').scrollTop=0}
-  function closeSheet(){$('ov').hidden=true;draft=null;pay=null}
+  function closeSheet(){$('ov').hidden=true;draft=null;pay=null;edit=null;impData=null}
 
   function optRow(k){
     var a=ADD[k],q=draft.add[k]||0;
-    return '<div class="opt"><div class="opt-n">'+(a.promo?'<span class="tag">โปร</span> ':'')+'<b>'+a.name+'</b> <span class="num">'+fmt(a.price)+'</span>'+(a.patty?'<small>ใส่ในเบอร์เกอร์ชิ้นเดิม ไม่ใช่เบอร์เกอร์เพิ่ม</small>':'')+'</div>'+
-      '<div class="stepper"><button data-act="odec" data-k="'+k+'" aria-label="ลด '+a.name+'">−</button><span>'+q+'</span><button data-act="oinc" data-k="'+k+'" aria-label="เพิ่ม '+a.name+'">+</button></div></div>';
+    return '<div class="opt"><div class="opt-n">'+(a.promo?'<span class="tag">โปร</span> ':'')+'<b>'+esc(a.name)+'</b> <span class="num">'+fmt(a.price)+'</span>'+(a.patty?'<small>ใส่ในเบอร์เกอร์ชิ้นเดิม ไม่ใช่เบอร์เกอร์เพิ่ม</small>':'')+'</div>'+
+      '<div class="stepper"><button data-act="odec" data-k="'+k+'" aria-label="ลด '+esc(a.name)+'">−</button><span>'+q+'</span><button data-act="oinc" data-k="'+k+'" aria-label="เพิ่ม '+esc(a.name)+'">+</button></div></div>';
   }
   function renderOpt(){
     var b=BURGER[draft.b], tot=(b.price+addSum(draft.add))*draft.qty;
-    openSheetKeepScroll('<div class="s-head"><h3>'+b.name+'<br><span class="num" style="color:var(--muted);font-size:16px">'+fmt(b.price)+'</span></h3><button class="x" data-act="close" aria-label="ปิด">×</button></div>'+
+    openSheetKeepScroll('<div class="s-head"><h3>'+esc(b.name)+'<br><span class="num" style="color:var(--muted);font-size:16px">'+fmt(b.price)+'</span></h3><button class="x" data-act="close" aria-label="ปิด">×</button></div>'+
       '<div class="grp">ผัก (ติ๊กที่ต้องการ)</div><div class="vegs">'+VEG.map(function(v){
         var on=draft.veg.indexOf(v)>-1;
-        return '<button class="mbtn" data-act="vtog" data-v="'+v+'" aria-pressed="'+on+'"><span class="tick"></span>'+v+'</button>'}).join('')+'</div>'+
+        return '<button class="mbtn" data-act="vtog" data-v="'+esc(v)+'" aria-pressed="'+on+'"><span class="tick"></span>'+esc(v)+'</button>'}).join('')+'</div>'+
       '<div class="grp">เพิ่มเติม</div>'+EXTRA_KEYS.map(optRow).join('')+
       '<div class="qrow"><b>จำนวนเบอร์เกอร์</b><div class="stepper"><button data-act="qdec" aria-label="ลด">−</button><span>'+draft.qty+'</span><button data-act="qinc" aria-label="เพิ่ม">+</button></div></div>'+
       '<button class="btn pri wide" style="margin-top:16px" data-act="oadd">'+(draft.quick?'ยืนยัน · ':'เพิ่มลงออเดอร์ · ')+fmt(tot)+'</button>');
@@ -400,7 +466,7 @@ summary .amt{font-family:var(--f-display);font-weight:700;font-variant-numeric:t
     counter.n++;save('smash.counter',counter);
     var o={id:Date.now(),no:counter.n,day:today,ts:Date.now(),cust:cust.trim(),mode:mode,method:pay.method,total:t,recv:r,change:r-t,
       lines:cart.map(function(l){
-        return {name:BURGER[l.b].name,short:BURGER[l.b].short,price:BURGER[l.b].price,qty:l.qty,total:unit(l)*l.qty,veg:l.veg.slice(),
+        return {name:BURGER[l.b].name,short:BURGER[l.b].name,price:BURGER[l.b].price,qty:l.qty,total:unit(l)*l.qty,veg:l.veg.slice(),
           add:Object.keys(l.add).map(function(k){return {name:ADD[k].name,promo:!!ADD[k].promo,price:ADD[k].price,qty:l.add[k]}})};
       })};
     orders.push(o);save('smash.orders',orders);
@@ -410,9 +476,9 @@ summary .amt{font-family:var(--f-display);font-weight:700;font-variant-numeric:t
   }
   function renderReceipt(o){
     var rows=o.lines.map(function(l){
-      var adds=l.add.map(function(a){return '<li style="color:var(--muted);font-size:13px;padding-left:12px"><span>'+(a.promo?'[โปร] ':'')+a.name+' ×'+a.qty+'</span><span class="num">+'+fmt(a.price*a.qty*l.qty)+'</span></li>'}).join('');
-      var vg=l.veg&&l.veg.length?'<li style="color:var(--muted);font-size:13px;padding-left:12px"><span>ผัก: '+l.veg.join(', ')+'</span></li>':'';
-      return '<li><span>'+l.name+' ×'+l.qty+'</span><span class="num">'+fmt(l.price*l.qty)+'</span></li>'+vg+adds;
+      var adds=l.add.map(function(a){return '<li style="color:var(--muted);font-size:13px;padding-left:12px"><span>'+(a.promo?'[โปร] ':'')+esc(a.name)+' ×'+a.qty+'</span><span class="num">+'+fmt(a.price*a.qty*l.qty)+'</span></li>'}).join('');
+      var vg=l.veg&&l.veg.length?'<li style="color:var(--muted);font-size:13px;padding-left:12px"><span>ผัก: '+l.veg.map(esc).join(', ')+'</span></li>':'';
+      return '<li><span>'+esc(l.name)+' ×'+l.qty+'</span><span class="num">'+fmt(l.price*l.qty)+'</span></li>'+vg+adds;
     }).join('');
     openSheet('<div class="queue"><small>ชำระแล้ว · เลขคิว</small><b>#'+o.no+'</b><span class="badge'+(o.mode==='take'?' take':'')+'">'+modeLabel(o.mode)+'</span></div>'+
       (o.cust?'<div class="who">'+esc(o.cust)+'</div>':'')+
@@ -426,82 +492,309 @@ summary .amt{font-family:var(--f-display);font-weight:700;font-variant-numeric:t
   }
 
   /* ---------- summary ---------- */
+  function liveOrders(){return orders.filter(function(o){return !o.void})}
   function renderBadge(){
-    var n=orders.filter(function(o){return o.day===dayKey()}).length,b=$('t-count');
+    var n=liveOrders().filter(function(o){return o.day===dayKey()}).length,b=$('t-count');
     b.textContent=n;b.hidden=!n;
   }
-  function renderSummary(){
-    var today=dayKey(),os=orders.filter(function(o){return o.day===today}).sort(function(a,b){return b.ts-a.ts});
-    var total=os.reduce(function(s,o){return s+o.total},0), n=os.length;
-    var byMode={dine:{n:0,t:0},take:{n:0,t:0}}, byPay={cash:0,transfer:0};
-    var items={}, adds={};
+  function thDate(day,short){
+    var p=String(day).split('-');if(p.length!==3)return String(day);
+    return new Date(+p[0],+p[1]-1,+p[2]).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:short?'2-digit':'numeric'});
+  }
+  function addDays(n){var d=new Date();return dayKey(new Date(d.getFullYear(),d.getMonth(),d.getDate()+n))}
+  function rangeInfo(){
+    var t=dayKey(),r={from:t,to:t,label:'วันนี้',file:t};
+    if(rng==='yday'){r.from=r.to=addDays(-1);r.label='เมื่อวาน';r.file=r.from}
+    else if(rng==='7d'){r.from=addDays(-6);r.label='7 วันล่าสุด';r.file=r.from+'_ถึง_'+t}
+    else if(rng==='month'){var d=new Date();r.from=dayKey(new Date(d.getFullYear(),d.getMonth(),1));r.label='เดือนนี้';r.file=r.from+'_ถึง_'+t}
+    else if(rng==='all'){r.from='0000-00-00';r.to='9999-99-99';r.label='ทั้งหมด';r.file='ทั้งหมด-'+t}
+    else if(rng==='pick'&&pickDay){r.from=r.to=pickDay;r.label=thDate(pickDay);r.file=pickDay}
+    r.multi=r.from!==r.to;
+    return r;
+  }
+  function inRange(o,r){return o.day>=r.from&&o.day<=r.to}
+  function agg(os){
+    var a={total:0,n:os.length,byMode:{dine:{n:0,t:0},take:{n:0,t:0}},byPay:{cash:0,transfer:0},items:{},adds:{},days:{}};
     os.forEach(function(o){
-      byMode[o.mode].n++;byMode[o.mode].t+=o.total;byPay[o.method]+=o.total;
+      a.total+=o.total;
+      var m=a.byMode[o.mode==='take'?'take':'dine'];m.n++;m.t+=o.total;
+      a.byPay[o.method==='transfer'?'transfer':'cash']+=o.total;
+      var dd=a.days[o.day]||(a.days[o.day]={n:0,t:0});dd.n++;dd.t+=o.total;
       o.lines.forEach(function(l){
-        var it=items[l.name]||(items[l.name]={qty:0,amt:0});it.qty+=l.qty;it.amt+=l.price*l.qty;
-        l.add.forEach(function(a){
-          var key=(a.promo?'[โปร] ':'')+a.name,x=adds[key]||(adds[key]={qty:0,amt:0});
-          x.qty+=a.qty*l.qty;x.amt+=a.price*a.qty*l.qty;
+        var it=a.items[l.name]||(a.items[l.name]={qty:0,amt:0});it.qty+=l.qty;it.amt+=l.price*l.qty;
+        l.add.forEach(function(x){
+          var key=(x.promo?'[โปร] ':'')+x.name,y=a.adds[key]||(a.adds[key]={qty:0,amt:0});
+          y.qty+=x.qty*l.qty;y.amt+=x.price*x.qty*l.qty;
         });
       });
     });
+    return a;
+  }
+  function backupAge(){var t=load('smash.lastBackup',0);return t?(Date.now()-t)/864e5:Infinity}
+  function lastBackupTxt(){var t=load('smash.lastBackup',0);return t?new Date(t).toLocaleString('th-TH',{dateStyle:'medium',timeStyle:'short'}):'ยังไม่เคยสำรอง'}
+  function lineUnit(l){return l.price+l.add.reduce(function(s,a){return s+a.price*a.qty},0)}
+  function billRow(o,multi){
+    var cnt=o.lines.reduce(function(s,l){return s+l.qty},0);
+    var det=o.lines.map(function(l){
+      return '<div class="kv"><span>'+esc(l.name)+' ×'+l.qty+'</span><span class="num">'+fmt(l.price*l.qty)+'</span></div>'+
+        (l.veg&&l.veg.length?'<div class="kv" style="color:var(--muted);font-size:13px;padding-left:12px"><span>ผัก: '+l.veg.map(esc).join(', ')+'</span></div>':'')+
+        l.add.map(function(a){return '<div class="kv" style="color:var(--muted);font-size:13px;padding-left:12px"><span>'+(a.promo?'[โปร] ':'')+esc(a.name)+' ×'+a.qty+'</span><span class="num">+'+fmt(a.price*a.qty*l.qty)+'</span></div>'}).join('');
+    }).join('');
+    var acts=o.void?
+      '<button class="del" data-act="restore" data-id="'+o.id+'">กู้คืนบิล</button><button class="del" data-act="purge" data-id="'+o.id+'">ลบถาวร</button>':
+      '<button class="del" data-act="editbill" data-id="'+o.id+'">แก้ไขบิล</button><button class="del" data-act="voidbill" data-id="'+o.id+'">ยกเลิกบิล</button>';
+    return '<details'+(o.void?' class="void"':'')+'><summary><span class="no">#'+o.no+'</span>'+(o.void?'<span class="vtag">ยกเลิก</span>':'')+
+      '<span class="meta">'+(o.cust?'<span class="cn">'+esc(o.cust)+'</span> · ':'')+(multi?thDate(o.day,true)+' ':'')+hhmm(o.ts)+' · '+modeLabel(o.mode)+' · '+cnt+' ชิ้น · '+(o.method==='cash'?'เงินสด':'โอน/QR')+(o.edited?' · แก้ไขแล้ว':'')+'</span><span class="amt">'+fmt(o.total)+'</span></summary>'+
+      '<div class="bd">'+det+'<div class="acts">'+acts+'</div></div></details>';
+  }
+  function renderSummary(){
+    var r=rangeInfo(),inR=orders.filter(function(o){return inRange(o,r)}).sort(function(a,b){return b.ts-a.ts});
+    var live=inR.filter(function(o){return !o.void}),voided=inR.length-live.length,a=agg(live),n=a.n,total=a.total;
     function rows(map){
-      var ks=Object.keys(map).sort(function(a,b){return map[b].qty-map[a].qty});
-      return ks.map(function(k){return '<tr><td>'+k+'</td><td class="r">'+map[k].qty+'</td><td class="r">'+fmt(map[k].amt)+'</td></tr>'}).join('');
+      var ks=Object.keys(map).sort(function(x,y){return map[y].qty-map[x].qty}),mx=ks.length?map[ks[0]].qty:1;
+      return ks.map(function(k,i){return '<tr><td><div>'+(i+1)+'. '+esc(k)+'</div><div class="mbar"><i style="width:'+Math.max(4,Math.round(map[k].qty/mx*100))+'%"></i></div></td><td class="r">'+map[k].qty+'</td><td class="r">'+fmt(map[k].amt)+'</td></tr>'}).join('');
     }
-    var nowTxt=new Date().toLocaleString('th-TH',{dateStyle:'long',timeStyle:'short'});
-    var h='<div class="sumbar"><button class="btn pri" id="pdfbtn" data-act="pdf">บันทึกยอดขายเป็น PDF</button></div>'+
-      '<div class="rev"><small>ยอดขายวันนี้</small><div class="big">'+fmt(total)+'</div>'+
+    var chips=[['today','วันนี้'],['yday','เมื่อวาน'],['7d','7 วัน'],['month','เดือนนี้'],['all','ทั้งหมด']].map(function(c){
+      return '<button class="chip" data-act="rng" data-r="'+c[0]+'" aria-pressed="'+(rng===c[0])+'">'+c[1]+'</button>'}).join('')+
+      '<label class="dpick"><span class="hint">เลือกวัน</span><input type="date" class="cin" id="pickday" max="'+dayKey()+'" value="'+(rng==='pick'?pickDay:'')+'" aria-label="เลือกวันที่ดูยอด"></label>';
+    var h='';
+    if(orders.length&&backupAge()>3)h+='<div class="nudge"><span>ยังไม่ได้สำรองข้อมูลมาสักพัก ('+(isFinite(backupAge())?'ล่าสุด '+lastBackupTxt():'ยังไม่เคยสำรอง')+') บิลเก็บอยู่ในเครื่องนี้เครื่องเดียว</span><button class="btn pri" data-act="backup">สำรองข้อมูลตอนนี้</button></div>';
+    h+='<div class="chips" role="group" aria-label="ช่วงเวลา">'+chips+'</div>'+
+      '<div class="sumbar"><button class="btn pri" id="pdfbtn" data-act="pdf">บันทึกยอดขายเป็น PDF</button></div>'+
+      '<div class="rev"><small>ยอดขาย'+esc(r.label)+'</small><div class="big">'+fmt(total)+'</div>'+
       '<div class="facts"><span><b>'+n+'</b> บิล</span><span>เฉลี่ย <b>'+fmt(n?Math.round(total/n):0)+'</b>/บิล</span>'+
-      '<span>เงินสด <b>'+fmt(byPay.cash)+'</b></span><span>โอน/QR <b>'+fmt(byPay.transfer)+'</b></span></div></div>';
-    if(!n){
-      h+='<p class="empty">ยังไม่มีบิลวันนี้<br>เมื่อกดยืนยันรับเงินที่หน้าขาย ยอดจะมาแสดงที่นี่</p>';
+      '<span>เงินสด <b>'+fmt(a.byPay.cash)+'</b></span><span>โอน/QR <b>'+fmt(a.byPay.transfer)+'</b></span>'+(voided?'<span>ยกเลิก <b>'+voided+'</b> บิล (ไม่นับยอด)</span>':'')+'</div></div>';
+    if(!inR.length){
+      h+='<p class="empty">ไม่มีบิลในช่วงนี้</p>';
     }else{
-      h+='<h2 class="sec">ทานที่ร้าน / กลับบ้าน</h2><div class="tw"><table><thead><tr><th>แบบ</th><th class="r">บิล</th><th class="r">ยอด</th></tr></thead><tbody>'+
-        '<tr><td>ทานที่ร้าน</td><td class="r">'+byMode.dine.n+'</td><td class="r">'+fmt(byMode.dine.t)+'</td></tr>'+
-        '<tr><td>กลับบ้าน</td><td class="r">'+byMode.take.n+'</td><td class="r">'+fmt(byMode.take.t)+'</td></tr></tbody></table></div>'+
-        '<h2 class="sec">ขายอะไรไปบ้าง</h2><div class="tw"><table><thead><tr><th>รายการ</th><th class="r">จำนวน</th><th class="r">ยอด</th></tr></thead><tbody>'+rows(items)+'</tbody></table></div>'+
-        (Object.keys(adds).length?'<h2 class="sec">แพตตี้/ท็อปปิ้งเพิ่ม (ไม่นับเป็นเบอร์เกอร์)</h2><div class="tw"><table><thead><tr><th>รายการ</th><th class="r">จำนวน</th><th class="r">ยอด</th></tr></thead><tbody>'+rows(adds)+'</tbody></table></div>':'')+
-        '<h2 class="sec">บิลวันนี้</h2><div class="bills">'+os.map(function(o){
-          var cnt=o.lines.reduce(function(s,l){return s+l.qty},0);
-          var det=o.lines.map(function(l){
-            return '<div class="kv"><span>'+l.name+' ×'+l.qty+'</span><span class="num">'+fmt(l.price*l.qty)+'</span></div>'+
-              (l.veg&&l.veg.length?'<div class="kv" style="color:var(--muted);font-size:13px;padding-left:12px"><span>ผัก: '+l.veg.join(', ')+'</span></div>':'')+
-              l.add.map(function(a){return '<div class="kv" style="color:var(--muted);font-size:13px;padding-left:12px"><span>'+(a.promo?'[โปร] ':'')+a.name+' ×'+a.qty+'</span><span class="num">+'+fmt(a.price*a.qty*l.qty)+'</span></div>'}).join('');
-          }).join('');
-          return '<details><summary><span class="no">#'+o.no+'</span><span class="meta">'+(o.cust?'<span class="cn">'+esc(o.cust)+'</span> · ':'')+hhmm(o.ts)+' · '+modeLabel(o.mode)+' · '+cnt+' ชิ้น · '+(o.method==='cash'?'เงินสด':'โอน/QR')+'</span><span class="amt">'+fmt(o.total)+'</span></summary>'+
-            '<div class="bd">'+det+'<button class="del" data-act="delbill" data-id="'+o.id+'">ลบบิลนี้</button></div></details>';
-        }).join('')+'</div>';
+      if(r.multi&&n){
+        h+='<h2 class="sec">แยกรายวัน</h2><div class="tw"><table><thead><tr><th>วันที่</th><th class="r">บิล</th><th class="r">ยอด</th></tr></thead><tbody>'+
+          Object.keys(a.days).sort().reverse().map(function(d){return '<tr><td>'+thDate(d)+'</td><td class="r">'+a.days[d].n+'</td><td class="r">'+fmt(a.days[d].t)+'</td></tr>'}).join('')+'</tbody></table></div>';
+      }
+      if(n){
+        h+='<h2 class="sec">ทานที่ร้าน / กลับบ้าน</h2><div class="tw"><table><thead><tr><th>แบบ</th><th class="r">บิล</th><th class="r">ยอด</th></tr></thead><tbody>'+
+          '<tr><td>ทานที่ร้าน</td><td class="r">'+a.byMode.dine.n+'</td><td class="r">'+fmt(a.byMode.dine.t)+'</td></tr>'+
+          '<tr><td>กลับบ้าน</td><td class="r">'+a.byMode.take.n+'</td><td class="r">'+fmt(a.byMode.take.t)+'</td></tr></tbody></table></div>'+
+          '<h2 class="sec">เมนูขายดี</h2><div class="tw"><table><thead><tr><th>รายการ</th><th class="r">จำนวน</th><th class="r">ยอด</th></tr></thead><tbody>'+rows(a.items)+'</tbody></table></div>'+
+          (Object.keys(a.adds).length?'<h2 class="sec">แพตตี้/ท็อปปิ้งเพิ่ม (ไม่นับเป็นเบอร์เกอร์)</h2><div class="tw"><table><thead><tr><th>รายการ</th><th class="r">จำนวน</th><th class="r">ยอด</th></tr></thead><tbody>'+rows(a.adds)+'</tbody></table></div>':'');
+      }
+      var cap=r.multi?150:inR.length;
+      h+='<h2 class="sec">บิล'+(r.multi?'ในช่วงนี้':' '+esc(r.label))+'</h2><div class="bills">'+inR.slice(0,cap).map(function(o){return billRow(o,r.multi)}).join('')+'</div>'+
+        (inR.length>cap?'<p class="hint" style="margin-top:8px">แสดง '+cap+' บิลล่าสุดจากทั้งหมด '+inR.length+' บิล (ยอดรวมด้านบนนับครบทุกบิล)</p>':'');
     }
     $('v-sum').innerHTML=h;
   }
 
+  /* ---------- settings: เมนู / สำรองข้อมูล / ออฟไลน์ ---------- */
+  function saveMenu(){save('smash.menu',menu);applyMenu()}
+  function menuList(k){return k==='b'?menu.burgers:(k==='a'?menu.adds:menu.veg)}
+  function upBtn(k,i){return '<button class="mini up" data-act="mup" data-k="'+k+'" data-i="'+i+'" aria-label="เลื่อนขึ้น"'+(i?'':' disabled')+'>▲</button>'}
+  function delBtn(k,i){return '<button class="mini dl" data-act="mdel" data-k="'+k+'" data-i="'+i+'">ลบ</button>'}
+  function nameIn(k,i,v){return '<input class="cin" data-k="'+k+'" data-i="'+i+'" data-f="name" value="'+esc(v)+'" maxlength="60" autocomplete="off" aria-label="ชื่อ">'}
+  function priceIn(k,i,v){return '<input class="cin num" data-k="'+k+'" data-i="'+i+'" data-f="price" value="'+v+'" inputmode="numeric" autocomplete="off" aria-label="ราคา (บาท)">'}
+  function renderSettings(){
+    var h='<div class="setsec"><h3>เมนูเบอร์เกอร์</h3><p class="hint">แก้ชื่อหรือราคาได้ทันที บิลที่ขายไปแล้วไม่เปลี่ยนตาม</p>'+
+      menu.burgers.map(function(b,i){
+        return '<div class="mrow">'+upBtn('b',i)+nameIn('b',i,b.name)+priceIn('b',i,b.price)+delBtn('b',i)+
+          '<div class="sub"><span class="hint">ไอคอน</span>'+[['beef','เนื้อ'],['pork','หมู'],['other','อื่น ๆ']].map(function(m){
+            return '<button class="mini" data-act="mmeat" data-i="'+i+'" data-v="'+m[0]+'" aria-pressed="'+(b.meat===m[0])+'">'+m[1]+'</button>'}).join('')+'</div></div>';
+      }).join('')+'<button class="btn" style="margin-top:8px" data-act="madd" data-k="b">+ เพิ่มเบอร์เกอร์</button></div>'+
+    '<div class="setsec"><h3>ผัก</h3><p class="hint">แสดงเป็นช่องติ๊กในหน้าเลือกตัวเลือกเสริม</p>'+
+      menu.veg.map(function(v,i){return '<div class="mrow v">'+upBtn('v',i)+nameIn('v',i,v)+delBtn('v',i)+'</div>'}).join('')+
+      '<button class="btn" style="margin-top:8px" data-act="madd" data-k="v">+ เพิ่มผัก</button></div>'+
+    '<div class="setsec"><h3>เพิ่มเติม / โปรโมชั่น</h3><p class="hint">“แพตตี้เพิ่ม” คือใส่ในเบอร์เกอร์ชิ้นเดิม ไม่นับเป็นเบอร์เกอร์เพิ่ม “โปร” จะมีป้ายสีเหลืองกำกับ</p>'+
+      menu.adds.map(function(x,i){
+        return '<div class="mrow">'+upBtn('a',i)+nameIn('a',i,x.name)+priceIn('a',i,x.price)+delBtn('a',i)+
+          '<div class="sub"><button class="mini" data-act="atog" data-i="'+i+'" data-f="patty" aria-pressed="'+!!x.patty+'">แพตตี้เพิ่ม</button><button class="mini" data-act="atog" data-i="'+i+'" data-f="promo" aria-pressed="'+!!x.promo+'">โปร</button></div></div>';
+      }).join('')+'<button class="btn" style="margin-top:8px" data-act="madd" data-k="a">+ เพิ่มรายการ</button></div>'+
+    '<div class="setsec"><h3>สำรองข้อมูล</h3><p class="hint">บิลและยอดขายเก็บอยู่ในเครื่องนี้เครื่องเดียว ถ้าล้างข้อมูลเบราว์เซอร์หรือเปลี่ยนมือถือจะหายหมด ควรเก็บไฟล์สำรองไว้เป็นระยะ (เช่น ส่งเข้า LINE หรือ Google Drive) แล้วนำเข้ากลับได้เมื่อต้องการ</p>'+
+      '<p style="margin:8px 0 0">มี <b>'+orders.length+'</b> บิลในเครื่อง · สำรองล่าสุด: <span class="'+(backupAge()>3?'warn':'ok')+'">'+lastBackupTxt()+'</span></p>'+
+      '<div class="btnrow"><button class="btn pri" data-act="backup">⬇ ดาวน์โหลดไฟล์สำรอง</button><button class="btn" data-act="backupShare">📤 ส่งไฟล์สำรองไปที่…</button><button class="btn" data-act="importPick">⬆ นำเข้าไฟล์สำรอง</button></div></div>'+
+    '<div class="setsec"><h3>เครื่องพิมพ์ใบออเดอร์</h3><div class="btnrow"><button class="btn" data-act="pset">ตั้งค่าเครื่องพิมพ์ / ขนาดกระดาษ</button></div></div>'+
+    '<div class="setsec"><h3>การใช้งานออฟไลน์</h3><p id="offst" class="hint">กำลังตรวจสอบ…</p>'+
+      '<div class="btnrow">'+(installEv?'<button class="btn pri" data-act="install">ติดตั้งแอปบนเครื่องนี้</button>':'')+'</div>'+
+      '<p class="hint" style="margin-top:8px">Android (Chrome): เมนู ⋮ → “เพิ่มลงในหน้าจอหลัก” · iPhone (Safari): ปุ่มแชร์ → “เพิ่มลงในหน้าจอโฮม”</p></div>'+
+    '<div class="setsec"><button class="del" style="margin-top:0" data-act="mreset">รีเซ็ตเมนูเป็นค่าเริ่มต้น</button><p class="hint" style="margin-top:8px">รีเซ็ตเฉพาะเมนู ราคา ผัก และของเพิ่ม ไม่แตะบิล · เวอร์ชัน '+BUILD+'</p></div>';
+    $('v-set').innerHTML=h;
+    offlineStatus();
+  }
+  function offlineStatus(){
+    var el=$('offst');if(!el)return;
+    if(!('serviceWorker' in navigator)||window.top!==window.self||!/^https?:$/.test(location.protocol)){
+      el.className='hint';el.textContent='โหมดนี้ใช้ออฟไลน์ไม่ได้ ต้องเปิดจากลิงก์เว็บของร้านเอง (GitHub Pages) แล้วติดตั้งเป็นแอป';return}
+    navigator.serviceWorker.getRegistration().then(function(r){
+      var e2=$('offst');if(!e2)return;
+      var ok=!!(r&&r.active);
+      e2.className=ok?'ok':'warn';e2.textContent=ok?'พร้อมใช้งานแม้อินเทอร์เน็ตหลุด':'ยังไม่พร้อม — เปิดหน้านี้ตอนมีอินเทอร์เน็ตอีกครั้งแล้วรอสักครู่';
+    }).catch(function(){});
+  }
+  function menuInput(el){
+    var k=el.dataset.k,i=+el.dataset.i,f=el.dataset.f,list=menuList(k),item=list[i];
+    if(item===undefined)return;
+    if(f==='price'){var d=el.value.replace(/\D/g,'').slice(0,5);if(d!==el.value)el.value=d;item.price=Number(d)||0}
+    else if(f==='name'){var nm=el.value.replace(/\s+/g,' ').trim().slice(0,60);if(!nm)return;if(k==='v')list[i]=nm;else item.name=nm}
+    saveMenu();
+  }
+  function arm(el,label,fn){
+    if(el.dataset.arm){fn();return}
+    var old=el.textContent;el.dataset.arm='1';el.classList.add('arm');el.textContent=label;
+    setTimeout(function(){if(el.isConnected){delete el.dataset.arm;el.classList.remove('arm');el.textContent=old}},3000);
+  }
+  function byId(id){return orders.filter(function(o){return o.id===id})[0]}
+  function persistOrders(){save('smash.orders',orders);renderBadge();if(tab==='sum')renderSummary()}
+
+  /* ---------- แก้ไขบิล ---------- */
+  function renderEdit(){
+    var o=byId(edit.id);if(!o){closeSheet();return}
+    var total=0;
+    var rows=o.lines.map(function(l,i){
+      var q=edit.q[i],u=lineUnit(l);total+=u*q;
+      var sub=(l.veg&&l.veg.length?'ผัก: '+l.veg.map(esc).join(', '):'')+(l.add.length?(l.veg&&l.veg.length?' · ':'')+l.add.map(function(a){return (a.promo?'[โปร] ':'')+esc(a.name)+' ×'+a.qty}).join(', '):'');
+      return '<div class="opt"><div class="opt-n"><b'+(q?'':' style="text-decoration:line-through;opacity:.6"')+'>'+esc(l.name)+'</b> <span class="num">'+fmt(u)+'</span>'+(sub?'<small>'+sub+'</small>':'')+'</div>'+
+        '<div class="stepper"><button data-act="eq" data-i="'+i+'" data-d="-1" aria-label="ลด">−</button><span>'+q+'</span><button data-act="eq" data-i="'+i+'" data-d="1" aria-label="เพิ่ม">+</button></div></div>';
+    }).join('');
+    openSheetKeepScroll('<div class="s-head"><h3>แก้ไขบิล #'+o.no+'</h3><button class="x" data-act="close" aria-label="ปิด">×</button></div>'+
+      '<input id="ecust" class="cin" type="text" maxlength="30" placeholder="ชื่อลูกค้า (ไม่ใส่ก็ได้)" autocomplete="off" value="'+esc(edit.cust)+'" aria-label="ชื่อลูกค้า">'+
+      '<div class="seg"><button class="btn" data-act="emode" data-v="dine" aria-pressed="'+(edit.mode==='dine')+'">ทานที่ร้าน</button><button class="btn" data-act="emode" data-v="take" aria-pressed="'+(edit.mode==='take')+'">กลับบ้าน</button></div>'+
+      '<div class="seg"><button class="btn" data-act="emeth" data-v="cash" aria-pressed="'+(edit.method==='cash')+'">เงินสด</button><button class="btn" data-act="emeth" data-v="transfer" aria-pressed="'+(edit.method==='transfer')+'">โอน / QR</button></div>'+
+      '<div class="grp">จำนวนที่สั่ง</div>'+rows+
+      '<div class="qrow"><b>ยอดรวมใหม่</b><b class="num" style="font-size:22px">'+fmt(total)+'</b></div>'+
+      '<p class="hint" style="margin-top:8px">เพิ่มเมนูใหม่ในบิลเดิมไม่ได้ ถ้าลูกค้าสั่งเพิ่มให้เปิดออเดอร์ใหม่ หรือยกเลิกบิลนี้แล้วคีย์ใหม่ ถ้าไม่เอาบิลนี้เลยให้ใช้ “ยกเลิกบิล”</p>'+
+      '<button class="btn pri wide" style="margin-top:12px" data-act="esave"'+(total>0?'':' disabled')+'>บันทึกการแก้ไข</button>');
+  }
+  function saveEdit(){
+    var o=byId(edit.id);if(!o)return;
+    var lines=[],total=0;
+    o.lines.forEach(function(l,i){var q=edit.q[i];if(q>0){var c=clone(l);c.qty=q;c.total=lineUnit(l)*q;total+=c.total;lines.push(c)}});
+    if(!lines.length)return;
+    o.lines=lines;o.total=total;o.cust=edit.cust.trim();o.mode=edit.mode;
+    if(edit.method==='cash'){var rc=o.method==='cash'?Math.max(Number(o.recv)||0,total):total;o.recv=rc;o.change=rc-total}
+    else{o.recv=total;o.change=0}
+    o.method=edit.method;o.edited=Date.now();
+    var no=o.no;closeSheet();persistOrders();toast('แก้ไขบิล #'+no+' แล้ว',1800);
+  }
+
+  /* ---------- สำรอง / นำเข้า ข้อมูล ---------- */
+  function stamp(){var d=new Date();return dayKey(d)+'_'+String(d.getHours()).padStart(2,'0')+String(d.getMinutes()).padStart(2,'0')}
+  function backupBlob(){return new Blob([JSON.stringify({app:'smash-pos',v:2,exportedAt:new Date().toISOString(),orders:orders,counter:counter,menu:menu,pw:PW})],{type:'application/json'})}
+  function afterBackup(){save('smash.lastBackup',Date.now());if(tab==='set')renderSettings();else if(tab==='sum')renderSummary()}
+  async function doBackup(){
+    var dl=await getDl();if(!dl){toast('เครื่องนี้บันทึกไฟล์จากหน้านี้ไม่ได้ ลองปุ่ม “ส่งไฟล์สำรองไปที่…”',2800);return}
+    try{await dl.save({filename:'smash-pos-backup-'+stamp()+'.json',data:backupBlob()});afterBackup();toast('บันทึกไฟล์สำรองแล้ว',2000)}
+    catch(err){toast(err&&err.code==='declined'?'ยกเลิกการบันทึก':'บันทึกไฟล์สำรองไม่สำเร็จ',2000)}
+  }
+  async function shareBackup(){
+    var nm='smash-pos-backup-'+stamp(),cands=[new File([backupBlob()],nm+'.json',{type:'application/json'}),new File([backupBlob()],nm+'.txt',{type:'text/plain'})],f=null;
+    try{for(var i=0;i<cands.length&&!f;i++)if(navigator.canShare&&navigator.canShare({files:[cands[i]]}))f=cands[i]}catch(e){f=null}
+    if(!f||!navigator.share){toast('เครื่องนี้แชร์ไฟล์จากหน้านี้ไม่ได้ ใช้ปุ่มดาวน์โหลดแทน',2800);return}
+    try{await navigator.share({files:[f],title:'ไฟล์สำรอง POS สแมชเบอร์เกอร์'});afterBackup()}
+    catch(err){if(!(err&&err.name==='AbortError'))toast('แชร์ไม่สำเร็จ ใช้ปุ่มดาวน์โหลดแทน',2400)}
+  }
+  function normOrder(o){
+    if(!o||typeof o!=='object'||!isFinite(o.id)||!isFinite(o.ts)||!isFinite(o.total)||typeof o.day!=='string'||!Array.isArray(o.lines))return null;
+    var ok=true;
+    o.lines.forEach(function(l){
+      if(!l||typeof l.name!=='string'||!isFinite(l.qty)||!isFinite(l.price)||!isFinite(l.total)){ok=false;return}
+      l.veg=Array.isArray(l.veg)?l.veg.map(String):[];
+      l.add=(Array.isArray(l.add)?l.add:[]).filter(function(a){return a&&typeof a.name==='string'&&isFinite(a.price)&&isFinite(a.qty)});
+    });
+    if(!ok)return null;
+    o.no=isFinite(o.no)?o.no:0;o.mode=o.mode==='take'?'take':'dine';o.method=o.method==='transfer'?'transfer':'cash';
+    o.recv=isFinite(o.recv)?o.recv:o.total;o.change=isFinite(o.change)?o.change:0;o.cust=typeof o.cust==='string'?o.cust:'';
+    return o;
+  }
+  function readImport(file){
+    var fr=new FileReader();
+    fr.onerror=function(){toast('อ่านไฟล์ไม่ได้',2200)};
+    fr.onload=function(){
+      var d=null;try{d=JSON.parse(String(fr.result))}catch(e){d=null}
+      if(!d||d.app!=='smash-pos'||!Array.isArray(d.orders)){toast('ไฟล์นี้ไม่ใช่ไฟล์สำรองของแอปนี้',2800);return}
+      var os=d.orders.map(normOrder).filter(Boolean);
+      impData={orders:os,counter:d.counter,menu:sanitizeMenu(d.menu),pw:d.pw,at:d.exportedAt,skipped:d.orders.length-os.length};
+      renderImport();
+    };
+    fr.readAsText(file);
+  }
+  function renderImport(){
+    var have={};orders.forEach(function(o){have[o.id]=1});
+    var fresh=impData.orders.filter(function(o){return !have[o.id]}).length;
+    var days=impData.orders.map(function(o){return o.day}).sort();
+    openSheet('<div class="s-head"><h3>นำเข้าไฟล์สำรอง</h3><button class="x" data-act="close" aria-label="ปิด">×</button></div>'+
+      '<div class="kv"><span>ในไฟล์</span><span class="num">'+impData.orders.length+' บิล</span></div>'+
+      (days.length?'<div class="kv" style="color:var(--muted);font-size:13px"><span>ช่วงวันที่</span><span>'+thDate(days[0],true)+' – '+thDate(days[days.length-1],true)+'</span></div>':'')+
+      (impData.at?'<div class="kv" style="color:var(--muted);font-size:13px"><span>สำรองไว้เมื่อ</span><span>'+new Date(impData.at).toLocaleString('th-TH',{dateStyle:'medium',timeStyle:'short'})+'</span></div>':'')+
+      '<div class="kv"><span>ในเครื่องตอนนี้</span><span class="num">'+orders.length+' บิล</span></div>'+
+      (impData.skipped?'<p class="hint warn" style="margin-top:8px">ข้ามบิลที่ข้อมูลไม่ครบ '+impData.skipped+' บิล</p>':'')+
+      '<button class="btn pri wide" style="margin-top:16px" data-act="impmerge"'+(fresh?'':' disabled')+'>รวมกับข้อมูลในเครื่อง (เพิ่ม '+fresh+' บิลที่ยังไม่มี)</button>'+
+      '<p class="hint" style="margin-top:6px">ปลอดภัยที่สุด บิลที่มีอยู่แล้วจะไม่ถูกแตะ</p>'+
+      '<button class="btn wide" style="margin-top:12px" data-act="impreplace">แทนที่ข้อมูลทั้งหมดด้วยไฟล์นี้</button>'+
+      '<p class="hint" style="margin-top:6px">บิลที่อยู่ในเครื่องแต่ไม่อยู่ในไฟล์จะหาย และเมนูจะเปลี่ยนตามไฟล์</p>');
+  }
+  function finishImport(msg){
+    save('smash.orders',orders);save('smash.counter',counter);
+    var m=impData;impData=null;closeSheet();
+    renderBadge();applyMenu();renderOrder();renderMenu();if(tab==='sum')renderSummary();else if(tab==='set')renderSettings();
+    toast(msg,2600);return m;
+  }
+  function doMerge(){
+    if(!impData)return;
+    var have={};orders.forEach(function(o){have[o.id]=1});
+    var add=impData.orders.filter(function(o){return !have[o.id]});
+    orders=orders.concat(add).sort(function(a,b){return a.ts-b.ts});
+    var c=impData.counter;
+    if(c&&typeof c.d==='string'&&isFinite(c.n)){
+      if(counter.d===c.d)counter.n=Math.max(counter.n,c.n|0);
+      else if(c.d>counter.d)counter={d:c.d,n:c.n|0};
+    }
+    finishImport('เพิ่ม '+add.length+' บิลแล้ว');
+  }
+  function doReplace(){
+    if(!impData)return;
+    orders=impData.orders.slice().sort(function(a,b){return a.ts-b.ts});
+    var c=impData.counter;
+    counter=(c&&typeof c.d==='string'&&isFinite(c.n))?{d:c.d,n:c.n|0}:{d:'',n:0};
+    if(impData.menu){menu=impData.menu;save('smash.menu',menu)}
+    if(impData.pw===58||impData.pw===80){PW=impData.pw;save('smash.pw',PW)}
+    finishImport('นำเข้าข้อมูล '+orders.length+' บิลแล้ว');
+  }
+
   function setTab(t){
     tab=t;
-    $('v-sell').hidden=t!=='sell';$('v-sum').hidden=t!=='sum';
-    $('t-sell').setAttribute('aria-selected',t==='sell');$('t-sum').setAttribute('aria-selected',t==='sum');
+    ['sell','sum','set'].forEach(function(k){$('v-'+k).hidden=t!==k;$('t-'+k).setAttribute('aria-selected',t===k)});
     $('bar').style.display=t==='sell'?'':'none';
     if(t==='sum')renderSummary();
-    else renderOrder();
+    else if(t==='set')renderSettings();
+    else{renderMenu();renderOrder()}
     window.scrollTo(0,0);
   }
 
-  /* ---------- PDF ยอดขาย: วาดลงแคนวาส A4 แล้วรวมเป็นไฟล์ PDF ---------- */
-  function buildPdf(){
-    var today=dayKey(),os=orders.filter(function(o){return o.day===today}).sort(function(a,b){return a.ts-b.ts});
-    var total=os.reduce(function(s,o){return s+o.total},0),n=os.length;
-    var byMode={dine:{n:0,t:0},take:{n:0,t:0}},byPay={cash:0,transfer:0},items={},adds={};
-    os.forEach(function(o){
-      byMode[o.mode].n++;byMode[o.mode].t+=o.total;byPay[o.method]+=o.total;
-      o.lines.forEach(function(l){
-        var it=items[l.name]||(items[l.name]={qty:0,amt:0});it.qty+=l.qty;it.amt+=l.price*l.qty;
-        l.add.forEach(function(a){
-          var key=(a.promo?'[โปร] ':'')+a.name,x=adds[key]||(adds[key]={qty:0,amt:0});
-          x.qty+=a.qty*l.qty;x.amt+=a.price*a.qty*l.qty;
-        });
-      });
+  /* ---------- PDF ยอดขาย: วาดลงแคนวาส A4 แล้วประกอบเป็นไฟล์ PDF เอง (ไม่พึ่งไลบรารีภายนอก ใช้ออฟไลน์ได้) ---------- */
+  function dataUrlBytes(u){var b=atob(u.split(',')[1]),n=b.length,a=new Uint8Array(n);for(var i=0;i<n;i++)a[i]=b.charCodeAt(i);return a}
+  function makePdf(canvases){
+    var enc=new TextEncoder(),parts=[],pos=0,offs=[],N=canvases.length,PWd=595.28,PHt=841.89;
+    function put(x){if(typeof x==='string')x=enc.encode(x);parts.push(x);pos+=x.length}
+    function begin(id){offs[id]=pos;put(id+' 0 obj\n')}
+    function end(){put('\nendobj\n')}
+    put('%PDF-1.4\n');put(new Uint8Array([37,226,227,207,211,10]));
+    var kids=[];for(var i=0;i<N;i++)kids.push((3+i*3)+' 0 R');
+    begin(1);put('<< /Type /Catalog /Pages 2 0 R >>');end();
+    begin(2);put('<< /Type /Pages /Count '+N+' /Kids ['+kids.join(' ')+'] >>');end();
+    canvases.forEach(function(c,i){
+      var pid=3+i*3,cid=pid+1,iid=pid+2,jpg=dataUrlBytes(c.toDataURL('image/jpeg',0.92)),cs='q '+PWd+' 0 0 '+PHt+' 0 0 cm /Im0 Do Q';
+      begin(pid);put('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 '+PWd+' '+PHt+'] /Resources << /XObject << /Im0 '+iid+' 0 R >> >> /Contents '+cid+' 0 R >>');end();
+      begin(cid);put('<< /Length '+cs.length+' >>\nstream\n'+cs+'\nendstream');end();
+      begin(iid);put('<< /Type /XObject /Subtype /Image /Width '+c.width+' /Height '+c.height+' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length '+jpg.length+' >>\nstream\n');put(jpg);put('\nendstream');end();
     });
+    var count=3+N*3,xr=pos;
+    put('xref\n0 '+count+'\n0000000000 65535 f \n');
+    for(var j=1;j<count;j++)put(String(offs[j]).padStart(10,'0')+' 00000 n \n');
+    put('trailer\n<< /Size '+count+' /Root 1 0 R >>\nstartxref\n'+xr+'\n%%EOF\n');
+    return new Blob(parts,{type:'application/pdf'});
+  }
+  function buildPdf(r,live,voided){
+    var os=live.slice().sort(function(a,b){return a.ts-b.ts}),a=agg(os),total=a.total,n=a.n,byMode=a.byMode,byPay=a.byPay,items=a.items,adds=a.adds;
     var W=1240,H=1754,M=70,K=1,pages=[],cx,y,INK='#161a18',MUTED='#5b665f',LINE='#c9cfcb',RED='#c93522';
+    var showBills=os.length<=150;
     function k(v){return Math.round(v*K)}
     function newPage(){var c=document.createElement('canvas');c.width=W;c.height=H;cx=c.getContext('2d');cx.fillStyle='#fff';cx.fillRect(0,0,W,H);pages.push(c);y=M}
     function font(w,s,d){cx.font=w+' '+k(s)+'px '+(d?'"Bai Jamjuree"':'"IBM Plex Sans Thai"')+',"Noto Sans Thai",sans-serif'}
@@ -509,48 +802,51 @@ summary .amt{font-family:var(--f-display);font-weight:700;font-variant-numeric:t
     function need(h){if(y+k(h)>H-M-30)newPage()}
     function rule(col,w){cx.strokeStyle=col||LINE;cx.lineWidth=w||2;cx.beginPath();cx.moveTo(M,y);cx.lineTo(W-M,y);cx.stroke()}
     function fit(t,max){if(cx.measureText(t).width<=max)return t;while(t.length>1&&cx.measureText(t+'…').width>max)t=t.slice(0,-1);return t+'…'}
-    function row(l,mid,r,o){o=o||{};need(o.h||46);font(o.w||400,o.s||26,o.d);
-      var x0=M+(o.ind||0),rightEdge=mid!=null?W-M-250-150:(r!=null?W-M-190:W-M);
+    function row(l,mid,rr,o){o=o||{};need(o.h||46);font(o.w||400,o.s||26,o.d);
+      var x0=M+(o.ind||0),rightEdge=mid!=null?W-M-250-150:(rr!=null?W-M-190:W-M);
       put(fit(l,rightEdge-x0),x0,'left',o.c);
-      if(mid!=null)put(mid,W-M-250,'right',o.c);if(r!=null)put(r,W-M,'right',o.c);y+=k(o.h||46)}
+      if(mid!=null)put(mid,W-M-250,'right',o.c);if(rr!=null)put(rr,W-M,'right',o.c);y+=k(o.h||46)}
     function section(t,head){need(120);y+=k(30);font(600,22);put(t,M,'left',MUTED);y+=k(12);rule(INK,3);y+=k(34);
       if(head){font(600,22);put(head[0],M,'left',MUTED);if(head[1])put(head[1],W-M-250,'right',MUTED);put(head[2],W-M,'right',MUTED);y+=k(12);rule();y+=k(30)}}
-    function table(map){Object.keys(map).sort(function(a,b){return map[b].qty-map[a].qty}).forEach(function(kk){row(kk,String(map[kk].qty),fmt(map[kk].amt))})}
+    function table(map){Object.keys(map).sort(function(x,z){return map[z].qty-map[x].qty}).forEach(function(kk,i){row((i+1)+'. '+kk,String(map[kk].qty),fmt(map[kk].amt))})}
     function draw(){
       pages=[];newPage();
       font(700,46,true);put('สแมชเบอร์เกอร์',M,'left',INK);
       font(500,26);put('สรุปยอดขาย',W-M,'right',RED);y+=k(50);
-      font(400,24);put(new Date().toLocaleDateString('th-TH',{weekday:'long',day:'numeric',month:'long',year:'numeric'})+' · สร้างไฟล์เมื่อ '+new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})+' น.',M,'left',MUTED);y+=k(26);rule(INK,4);y+=k(60);
-      font(500,24);put('ยอดขายรวมวันนี้',M,'left',MUTED);y+=k(120);
+      font(400,24);
+      var sub=r.multi?(r.from==='0000-00-00'?'ทุกบิลที่บันทึกไว้':thDate(r.from)+' – '+thDate(r.to)):new Date(+r.from.slice(0,4),+r.from.slice(5,7)-1,+r.from.slice(8,10)).toLocaleDateString('th-TH',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+      put(sub+' · สร้างไฟล์เมื่อ '+new Date().toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'})+' '+new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})+' น.',M,'left',MUTED);y+=k(26);rule(INK,4);y+=k(60);
+      font(500,24);put('ยอดขายรวม '+r.label,M,'left',MUTED);y+=k(120);
       font(700,92,true);put(fmt(total),M,'left',INK);y+=k(55);
-      font(400,26);put(n+' บิล · เฉลี่ย '+fmt(n?Math.round(total/n):0)+' ต่อบิล',M,'left',MUTED);y+=k(20);
+      font(400,26);put(n+' บิล · เฉลี่ย '+fmt(n?Math.round(total/n):0)+' ต่อบิล'+(voided?' · ยกเลิก '+voided+' บิล (ไม่นับยอด)':''),M,'left',MUTED);y+=k(20);
       section('วิธีรับเงิน',['วิธี',null,'ยอด']);
       row('เงินสด',null,fmt(byPay.cash));row('โอน / QR',null,fmt(byPay.transfer));
+      if(r.multi){section('แยกรายวัน',['วันที่','บิล','ยอด']);Object.keys(a.days).sort().reverse().forEach(function(d){row(thDate(d),String(a.days[d].n),fmt(a.days[d].t))})}
       section('ทานที่ร้าน / กลับบ้าน',['แบบ','บิล','ยอด']);
       row('ทานที่ร้าน',String(byMode.dine.n),fmt(byMode.dine.t));row('กลับบ้าน',String(byMode.take.n),fmt(byMode.take.t));
-      section('ขายอะไรไปบ้าง',['รายการ','จำนวน','ยอด']);table(items);
+      section('เมนูขายดี',['รายการ','จำนวน','ยอด']);table(items);
       if(Object.keys(adds).length){section('แพตตี้/ท็อปปิ้งเพิ่ม (ไม่นับเป็นเบอร์เกอร์)',['รายการ','จำนวน','ยอด']);table(adds)}
+      if(!showBills){section('รายการบิล');row('มีบิลมากกว่า 150 บิล จึงไม่แสดงรายละเอียดทีละบิล (ดูได้ในแอป หรือเลือกช่วงที่สั้นลง)',null,null,{c:MUTED,s:22})}
+      else{
       section('รายการบิล');
       os.forEach(function(o){
         var cnt=o.lines.reduce(function(s,l){return s+l.qty},0);
         need(100);
         row('#'+o.no+(o.cust?'  '+o.cust:''),null,fmt(o.total),{w:600,h:40});
-        row(hhmm(o.ts)+' น. · '+modeLabel(o.mode)+' · '+cnt+' ชิ้น · '+(o.method==='cash'?'เงินสด':'โอน/QR'),null,null,{ind:24,c:MUTED,s:21,h:34});
+        row((r.multi?thDate(o.day,true)+' ':'')+hhmm(o.ts)+' น. · '+modeLabel(o.mode)+' · '+cnt+' ชิ้น · '+(o.method==='cash'?'เงินสด':'โอน/QR'),null,null,{ind:24,c:MUTED,s:21,h:34});
         o.lines.forEach(function(l){
           row(l.name+' ×'+l.qty,null,fmt(l.price*l.qty),{ind:24,c:MUTED,s:23,h:36});
           if(l.veg&&l.veg.length)row('ผัก: '+l.veg.join(', '),null,null,{ind:48,c:MUTED,s:21,h:32});
-          l.add.forEach(function(a){row((a.promo?'[โปร] ':'')+a.name+' ×'+a.qty,null,'+'+fmt(a.price*a.qty*l.qty),{ind:48,c:MUTED,s:21,h:32})});
+          l.add.forEach(function(x){row((x.promo?'[โปร] ':'')+x.name+' ×'+x.qty,null,'+'+fmt(x.price*x.qty*l.qty),{ind:48,c:MUTED,s:21,h:32})});
         });
         y+=k(8);rule();y+=k(18);
       });
+      }
     }
-    /* ตัวหนังสือเล็กลง และย่อให้พอดี 1 หน้า (ไม่เล็กกว่า 0.62 ของขนาดเดิม) */
     K=0.72;draw();
     while(pages.length>1&&K>0.62){K=Math.max(0.62,K-0.04);draw()}
-    pages.forEach(function(c,i){var g=c.getContext('2d');g.font='400 18px "IBM Plex Sans Thai",sans-serif';g.fillStyle=MUTED;g.textAlign='right';g.fillText('หน้า '+(i+1)+'/'+pages.length,W-M,H-48)});
-    var doc=new window.jspdf.jsPDF({unit:'mm',format:'a4',compress:true});
-    pages.forEach(function(c,i){if(i)doc.addPage();doc.addImage(c.toDataURL('image/jpeg',0.92),'JPEG',0,0,210,297)});
-    return doc.output('blob');
+    pages.forEach(function(c,i){var g=c.getContext('2d');g.font='400 18px "IBM Plex Sans Thai","Noto Sans Thai",sans-serif';g.fillStyle=MUTED;g.textAlign='right';g.fillText('หน้า '+(i+1)+'/'+pages.length,W-M,H-48)});
+    return makePdf(pages);
   }
   /* บันทึกไฟล์: ใช้ระบบของ claude.ai ถ้ามี ไม่งั้น (เปิดหน้านี้เป็นไฟล์/เว็บเดี่ยว ๆ) ใช้ลิงก์ดาวน์โหลดของเบราว์เซอร์ */
   async function getDl(){
@@ -568,17 +864,15 @@ summary .amt{font-family:var(--f-display);font-weight:700;font-variant-numeric:t
   var pdfBusy=false;
   async function savePdf(btn){
     if(pdfBusy)return;
-    var today=dayKey();
-    if(!orders.some(function(o){return o.day===today})){toast('ยังไม่มีบิลวันนี้');return}
-    if(!window.jspdf){toast('โหลดตัวสร้าง PDF ไม่ได้ ลองเปิดหน้านี้ใหม่');return}
-    var dl=null;
-    dl=await getDl();
+    var r=rangeInfo(),inR=orders.filter(function(o){return inRange(o,r)}),live=inR.filter(function(o){return !o.void});
+    if(!live.length){toast('ไม่มีบิลในช่วงนี้');return}
+    var dl=await getDl();
     if(!dl){toast('เครื่องนี้บันทึกไฟล์จากหน้านี้ไม่ได้');return}
     pdfBusy=true;var label=btn.textContent;btn.disabled=true;btn.textContent='กำลังสร้าง PDF…';
     try{
-      await Promise.all(['400 26px "IBM Plex Sans Thai"','500 26px "IBM Plex Sans Thai"','600 26px "IBM Plex Sans Thai"','700 46px "Bai Jamjuree"'].map(function(f){return document.fonts.load(f,'กขค')}));
-      var blob=buildPdf();
-      await dl.save({filename:'ยอดขาย-'+today+'.pdf',data:blob});
+      try{await Promise.all(['400 26px "IBM Plex Sans Thai"','500 26px "IBM Plex Sans Thai"','600 26px "IBM Plex Sans Thai"','700 46px "Bai Jamjuree"'].map(function(f){return document.fonts.load(f,'กขค')}))}catch(e){}
+      var blob=buildPdf(r,live,inR.length-live.length);
+      await dl.save({filename:'ยอดขาย-'+r.file+'.pdf',data:blob});
       toast('บันทึกไฟล์ PDF แล้ว');
     }catch(err){
       toast(err&&err.code==='declined'?'ยกเลิกการบันทึก':'บันทึก PDF ไม่สำเร็จ ลองอีกครั้ง');
@@ -821,18 +1115,53 @@ summary .amt{font-family:var(--f-display);font-weight:700;font-variant-numeric:t
     else if(a==='ptest')printTicket({title:'ทดสอบเครื่องพิมพ์',ts:Date.now(),lines:[{name:'สแมชเบอร์เกอร์เนื้อ',qty:1,veg:['ผักกาดแก้ว','มะเขือเทศ'],add:[{name:'เพิ่มไข่',qty:1}]}]},el);
     else if(a==='confirm')confirmPay();
     else if(a==='close')closeSheet();
-    else if(a==='delbill'){
-      if(el.dataset.arm){
-        var id=+el.dataset.id;orders=orders.filter(function(o){return o.id!==id});save('smash.orders',orders);renderBadge();renderSummary();
-      }else{
-        el.dataset.arm='1';el.classList.add('arm');el.textContent='กดอีกครั้งเพื่อลบ';
-        setTimeout(function(){if(el.isConnected){delete el.dataset.arm;el.classList.remove('arm');el.textContent='ลบบิลนี้'}},3000);
-      }
+    else if(a==='rng'){rng=el.dataset.r;renderSummary()}
+    else if(a==='voidbill'){var vid=+el.dataset.id;arm(el,'กดอีกครั้งเพื่อยกเลิกบิล',function(){var o=byId(vid);if(o){o.void=true;o.voidAt=Date.now();persistOrders();toast('ยกเลิกบิล #'+o.no+' แล้ว (กู้คืนได้ในรายการบิล)',2400)}})}
+    else if(a==='restore'){var rid=+el.dataset.id,ro=byId(rid);if(ro){delete ro.void;delete ro.voidAt;persistOrders();toast('กู้คืนบิล #'+ro.no+' แล้ว',1800)}}
+    else if(a==='purge'){var pid=+el.dataset.id;arm(el,'กดอีกครั้งเพื่อลบถาวร',function(){orders=orders.filter(function(o){return o.id!==pid});persistOrders()})}
+    else if(a==='editbill'){var eo=byId(+el.dataset.id);if(eo){edit={id:eo.id,cust:eo.cust||'',mode:eo.mode,method:eo.method,q:eo.lines.map(function(l){return l.qty})};renderEdit()}}
+    else if(a==='eq'){var ei=+el.dataset.i,nq=edit.q[ei]+(+el.dataset.d);if(nq>=0&&nq<=99){edit.q[ei]=nq;renderEdit()}}
+    else if(a==='emode'){edit.mode=el.dataset.v;renderEdit()}
+    else if(a==='emeth'){edit.method=el.dataset.v;renderEdit()}
+    else if(a==='esave')saveEdit();
+    else if(a==='backup')doBackup();
+    else if(a==='backupShare')shareBackup();
+    else if(a==='importPick'){var pf=$('impfile');pf.value='';pf.click()}
+    else if(a==='impmerge')doMerge();
+    else if(a==='impreplace'){arm(el,'กดอีกครั้งเพื่อแทนที่ทั้งหมด',doReplace)}
+    else if(a==='madd'){
+      var mk=el.dataset.k,ml=menuList(mk),ni;
+      if(mk==='b')ml.push({id:uid('b'),name:'เบอร์เกอร์ใหม่',price:99,meat:'other'});
+      else if(mk==='a')ml.push({id:uid('a'),name:'รายการใหม่',price:10});
+      else ml.push('ผักใหม่');
+      ni=ml.length-1;saveMenu();renderSettings();
+      var fi=document.querySelector('#v-set input[data-k="'+mk+'"][data-i="'+ni+'"][data-f="name"]');if(fi){fi.focus();fi.select()}
     }
+    else if(a==='mdel'){
+      var dk=el.dataset.k,di=+el.dataset.i,dl2=menuList(dk);
+      if(dk==='b'&&dl2.length<=1){toast('ต้องมีเบอร์เกอร์อย่างน้อย 1 รายการ',2000)}
+      else arm(el,'กดอีกครั้ง',function(){dl2.splice(di,1);saveMenu();renderSettings();renderOrder()});
+    }
+    else if(a==='mup'){var uk=el.dataset.k,ui=+el.dataset.i,ul=menuList(uk);if(ui>0){var tmp=ul[ui];ul[ui]=ul[ui-1];ul[ui-1]=tmp;saveMenu();renderSettings()}}
+    else if(a==='mmeat'){menu.burgers[+el.dataset.i].meat=el.dataset.v;saveMenu();renderSettings()}
+    else if(a==='atog'){var ax=menu.adds[+el.dataset.i],af=el.dataset.f;if(ax[af])delete ax[af];else ax[af]=true;saveMenu();renderSettings()}
+    else if(a==='mreset'){arm(el,'กดอีกครั้งเพื่อรีเซ็ตเมนู',function(){menu=clone(DEFAULT_MENU);saveMenu();renderSettings();renderOrder();toast('รีเซ็ตเมนูแล้ว',1800)})}
+    else if(a==='install'){if(installEv){installEv.prompt();installEv=null;renderSettings()}}
   });
   document.addEventListener('input',function(e){
     if(e.target.id==='recv'&&pay){pay.recv=e.target.value;updatePay()}
     else if(e.target.id==='cust'){cust=e.target.value}
+    else if(e.target.id==='ecust'&&edit){edit.cust=e.target.value}
+    else if(e.target.dataset&&e.target.dataset.k&&e.target.dataset.f){menuInput(e.target)}
+  });
+  document.addEventListener('change',function(e){
+    var t=e.target;
+    if(t.id==='pickday'){if(t.value){pickDay=t.value;rng='pick'}else{rng='today'}renderSummary()}
+    else if(t.id==='impfile'){if(t.files&&t.files[0])readImport(t.files[0])}
+    else if(t.dataset&&t.dataset.k&&t.dataset.f==='name'){
+      var item=menuList(t.dataset.k)[+t.dataset.i],cur=t.dataset.k==='v'?item:(item&&item.name);
+      if(cur!==undefined)t.value=cur;
+    }
   });
   var opened=[];
   window.addEventListener('beforeprint',function(){
@@ -843,6 +1172,12 @@ summary .amt{font-family:var(--f-display);font-weight:700;font-variant-numeric:t
   document.addEventListener('keydown',function(e){if(e.key==='Escape'){if(!$('ov').hidden)closeSheet();else toggleOrder(false)}});
 
   $('today').textContent=new Date().toLocaleDateString('th-TH',{weekday:'long',day:'numeric',month:'long'});
+  function netState(){$('net').hidden=navigator.onLine!==false}
+  window.addEventListener('online',netState);window.addEventListener('offline',netState);netState();
+  window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();installEv=e;if(tab==='set')renderSettings()});
+  window.addEventListener('appinstalled',function(){installEv=null;if(tab==='set')renderSettings()});
+  try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
+  try{if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol)&&window.top===window.self)navigator.serviceWorker.register('sw.js').catch(function(){})}catch(e){}
   renderMenu();renderOrder();renderBadge();
 })();
 </script>
