@@ -900,10 +900,11 @@ summary .amt{font-family:var(--f-display);font-weight:700;font-variant-numeric:t
   var PW=load('smash.pw',58); if(PW!==80)PW=58;
   var PCFG=load('smash.pcfg',{});
   if(!PCFG||typeof PCFG!=='object')PCFG={};
-  PCFG.proto=(PCFG.proto==='tspl'||PCFG.proto==='cpcl')?PCFG.proto:'escpos';
+  PCFG.proto=['tspl','cpcl','aiyin','base'].indexOf(PCFG.proto)>-1?PCFG.proto:'escpos';
+  PCFG.w=[96,192,384,576].indexOf(PCFG.w)>-1?PCFG.w:0;PCFG.paper=PCFG.paper==='gap'?'gap':'cont';PCFG.dens=(PCFG.dens===0||PCFG.dens===2)?PCFG.dens:1;
   PCFG.chunk=(PCFG.chunk===20||PCFG.chunk===200)?PCFG.chunk:100;
   PCFG.resp=!!PCFG.resp;PCFG.inv=!!PCFG.inv;PCFG.ch=typeof PCFG.ch==='string'?PCFG.ch:'';
-  function savePcfg(){save('smash.pcfg',{proto:PCFG.proto,chunk:PCFG.chunk,resp:PCFG.resp,inv:PCFG.inv,ch:PCFG.ch})}
+  function savePcfg(){save('smash.pcfg',{proto:PCFG.proto,chunk:PCFG.chunk,resp:PCFG.resp,inv:PCFG.inv,ch:PCFG.ch,w:PCFG.w,paper:PCFG.paper,dens:PCFG.dens})}
   var printer=null,pchar=null,pchars=[],printing=false,diagBusy=false,diagRes=[],diagMsg='',diagDevName='';
   var PSVC=['000018f0-0000-1000-8000-00805f9b34fb','0000ff00-0000-1000-8000-00805f9b34fb','0000ffe0-0000-1000-8000-00805f9b34fb',
     '49535343-fe7d-4ae5-8fa9-9fafd205e455','e7810a71-73ae-499d-8c15-faa9aef0c3f2','0000fee7-0000-1000-8000-00805f9b34fb','0000ae30-0000-1000-8000-00805f9b34fb',
@@ -930,7 +931,7 @@ summary .amt{font-family:var(--f-display);font-weight:700;font-variant-numeric:t
         add:Object.keys(l.add).map(function(k){return {name:ADD[k].name,qty:l.add[k]}})}})};
   }
   function drawTicket(t,forShare){
-    var W=forShare?576:(PW===80?576:384),u=W/384,M=Math.round(8*u),H0=5000;
+    var W=forShare?576:(PCFG.w||(PW===80?576:384)),u=W/384,M=Math.round(8*u),H0=5000;
     var c=document.createElement('canvas');c.width=W;c.height=H0;
     var g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,W,H0);g.fillStyle='#000';g.textBaseline='alphabetic';
     var y=Math.round(6*u);
@@ -979,9 +980,22 @@ summary .amt{font-family:var(--f-display);font-weight:700;font-variant-numeric:t
     }
     return {wb:wb,H:H,data:out};
   }
+  /* เครื่องพิมพ์ตระกูล AiYin / Luck Jingle (คำสั่งขึ้นต้น 10 FF): ต้องส่งคำสั่ง “เปิดการพิมพ์” ก่อน และ “จบงาน” ท้ายสุด ไม่งั้นเครื่องรับข้อมูลแต่ไม่พิมพ์
+     aiyin = ชุด FE (AiYin) · base = ชุด F1 (รุ่นฐาน) ลำดับ: ความเข้ม > ชนิดกระดาษ > ปลุก (00 x12) > เปิดการพิมพ์ > รูปแบบ GS v 0 > เลื่อนกระดาษ > จบงาน */
+  function isLuck(p){return p==='aiyin'||p==='base'}
+  function luckBytes(c,proto,opt){
+    opt=opt||{};
+    var pk=packBits(c,!opt.inv),wb=pk.wb,H=pk.H,fe=proto!=='base',gap=(opt.paper||PCFG.paper)==='gap',dens=opt.dens!=null?opt.dens:PCFG.dens;
+    return cat(new Uint8Array([0x10,0xFF,0x10,0x00,dens]),new Uint8Array([0x10,0xFF,0x84,gap?0x00:0x02]),new Uint8Array(12),
+      new Uint8Array(fe?[0x10,0xFF,0xFE,0x01]:[0x10,0xFF,0xF1,0x03]),
+      new Uint8Array([0x1D,0x76,0x30,0,wb&255,wb>>8,H&255,H>>8]),pk.data,
+      new Uint8Array(gap?[0x1D,0x0C]:[0x1B,0x4A,0x50]),
+      new Uint8Array(fe?[0x10,0xFF,0xFE,0x45]:[0x10,0xFF,0xF1,0x45]));
+  }
   /* แปลงรูปใบออเดอร์เป็นคำสั่งของเครื่องพิมพ์: escpos (ใบเสร็จทั่วไป) / tspl / cpcl (เครื่องพิมพ์ฉลาก) */
   function toRaster(c,proto,inv){
     proto=proto||PCFG.proto;inv=inv==null?PCFG.inv:inv;
+    if(isLuck(proto))return luckBytes(c,proto,{inv:inv});
     var pk=packBits(c,(proto!=='tspl')!==inv),wb=pk.wb,H=pk.H;
     if(proto==='tspl')return cat(enc('SIZE '+(c.width/8)+' mm,'+Math.ceil(H/8)+' mm\r\nGAP 0 mm,0 mm\r\nDIRECTION 0\r\nCLS\r\nBITMAP 0,0,'+wb+','+H+',0,'),pk.data,enc('\r\nPRINT 1,1\r\n'));
     if(proto==='cpcl')return cat(enc('! 0 200 200 '+H+' 1\r\nPAGE-WIDTH '+c.width+'\r\nEG '+wb+' '+H+' 0 0 '),pk.data,enc('\r\nPRINT\r\n'));
@@ -990,27 +1004,40 @@ summary .amt{font-family:var(--f-display);font-weight:700;font-variant-numeric:t
     parts.push(new Uint8Array([0x1B,0x64,0x04]));
     return cat.apply(null,parts);
   }
-  /* เครื่องพิมพ์บางรุ่นต้องมีคนฟังช่องแจ้งสถานะ (notify) ก่อนถึงจะยอมรับข้อมูล และมักตอบกลับมาว่ากระดาษหมด/ฝาเปิด จึงสมัครรับไว้และเก็บค่าไว้ในรายงาน */
-  var pnotes=[];
+  /* เครื่องพิมพ์บางรุ่นต้องมีคนฟังช่องแจ้งสถานะ (notify) ก่อนถึงจะยอมรับข้อมูล และตอบกลับมาว่าพิมพ์เสร็จ/กระดาษหมด จึงสมัครรับไว้ และเก็บบันทึกไว้ในรายงาน */
+  var plog=[],nwaiters=[];
+  function logP(t){plog.push(t);if(plog.length>70)plog.shift()}
+  function bHex(a){return a.map(function(x){return ('0'+x.toString(16)).slice(-2)}).join(' ')}
+  function bTxt(a){var t='';for(var i=0;i<a.length;i++){if(a[i]<32||a[i]>126)return '';t+=String.fromCharCode(a[i])}return t}
+  function isAck(a){return a.length>0&&(a[0]===0xAA||bTxt(a).indexOf('OK')>-1)}
+  function onNote(label,v){
+    var a=[];if(v)for(var i=0;i<v.byteLength&&i<32;i++)a.push(v.getUint8(i));
+    var t=bTxt(a);logP('<- '+label+': '+bHex(a)+(t?'  "'+t+'"':''));
+    nwaiters.slice().forEach(function(w){w.note(a)});
+  }
+  function armAck(){
+    var got=false,res=null,tm=null,w={note:function(a){if(isAck(a)){got=true;if(res)fin(true)}}};
+    function fin(v){if(tm)clearTimeout(tm);var i=nwaiters.indexOf(w);if(i>-1)nwaiters.splice(i,1);var r=res;res=null;if(r)r(v)}
+    nwaiters.push(w);
+    return {wait:function(ms){return new Promise(function(r){if(got){fin(false);r(true);return}res=r;tm=setTimeout(function(){fin(false)},ms)})},cancel:function(){fin(false)}};
+  }
   function hookNotify(sv,c){
     try{
-      c.addEventListener('characteristicvaluechanged',function(e){
-        var v=e.target.value,a=[];if(v)for(var i=0;i<v.byteLength&&i<24;i++)a.push(('0'+v.getUint8(i).toString(16)).slice(-2));
-        pnotes.push(shortUuid(sv.uuid)+'/'+shortUuid(c.uuid)+': '+a.join(' '));if(pnotes.length>12)pnotes.shift();
-      });
-      var pr=c.startNotifications();if(pr&&pr.catch)pr.catch(function(){});
-    }catch(e){}
+      c.addEventListener('characteristicvaluechanged',function(e){onNote(shortUuid(sv.uuid)+'/'+shortUuid(c.uuid),e.target.value)});
+      var pr=c.startNotifications();return pr&&pr.catch?pr.catch(function(){}):Promise.resolve();
+    }catch(e){return Promise.resolve()}
   }
   function propStr(p){var a=[];[['read','read'],['write','write'],['writeWithoutResponse','writeNoResp'],['notify','notify'],['indicate','indicate']].forEach(function(k){if(p[k[0]])a.push(k[1])});return a.join('/')}
   function shortUuid(u){var m=/^0000([0-9a-f]{4})-0000-1000-8000-00805f9b34fb$/.exec(u);return m?m[1]:u}
   async function listChars(server){
-    var out=[],svcs=[];
+    var out=[],svcs=[],subs=[];
     try{svcs=await server.getPrimaryServices()}catch(e){svcs=[]}
     for(var i=0;i<svcs.length;i++){
       var sv=svcs[i],cs=[];
       try{cs=await sv.getCharacteristics()}catch(e){cs=[]}
-      cs.forEach(function(c){var w=!!(c.properties.write||c.properties.writeWithoutResponse);out.push({id:sv.uuid+'/'+c.uuid,svc:sv.uuid,uuid:c.uuid,ch:c,props:propStr(c.properties),w:w,std:!!STD_SVC[sv.uuid]});if(c.properties.notify||c.properties.indicate)hookNotify(sv,c)});
+      cs.forEach(function(c){var w=!!(c.properties.write||c.properties.writeWithoutResponse);out.push({id:sv.uuid+'/'+c.uuid,svc:sv.uuid,uuid:c.uuid,ch:c,props:propStr(c.properties),w:w,std:!!STD_SVC[sv.uuid]});if(c.properties.notify||c.properties.indicate)subs.push(hookNotify(sv,c))});
     }
+    if(subs.length)await Promise.race([Promise.all(subs),sleep(1500)]);
     return out;
   }
   function candidates(){return pchars.filter(function(x){return x.w&&!x.std})}
@@ -1052,12 +1079,17 @@ summary .amt{font-family:var(--f-display);font-weight:700;font-variant-numeric:t
     for(var i=0;i<bytes.length;i+=size){
       var part=bytes.slice(i,i+size);
       if(useNR)await ch.writeValueWithoutResponse(part);else await ch.writeValue(part);
-      await sleep(useNR?20:8);
+      await sleep(useNR?(size>20?35:20):8);
     }
+  }
+  async function sendCanvas(cv){
+    var luck=isLuck(PCFG.proto),ack=luck?armAck():null;
+    try{await sendBytes(toRaster(cv))}catch(e){if(ack)ack.cancel();throw e}
+    return luck?await ack.wait(12000):true;
   }
   /* ---------- โหมดหาวิธีพิมพ์: ส่งคำสั่งทดสอบหลายแบบไปทุกช่อง ให้ผู้ใช้ดูว่าแบบไหนพิมพ์ออกมา ---------- */
   var DIAG_PROTOS=[['escpos','ESC/POS'],['tspl','TSPL'],['cpcl','CPCL']];
-  function protoName(p){return p==='tspl'?'TSPL':(p==='cpcl'?'CPCL':'ESC/POS')}
+  function protoName(p){return p==='tspl'?'TSPL':(p==='cpcl'?'CPCL':(p==='aiyin'?'AiYin FE':(p==='base'?'AiYin F1':'ESC/POS')))}
   function diagCanvas(label){
     var c=document.createElement('canvas');c.width=384;c.height=72;var g=c.getContext('2d');
     g.fillStyle='#fff';g.fillRect(0,0,384,72);g.fillStyle='#000';g.font='700 34px sans-serif';g.textBaseline='middle';g.fillText(label,10,36);return c;
@@ -1097,17 +1129,74 @@ summary .amt{font-family:var(--f-display);font-weight:700;font-variant-numeric:t
     }
     diagBusy=false;renderPset();
   }
+  var LUCK_Q=[['model',[0x10,0xFF,0x20,0xF0]],['firmware',[0x10,0xFF,0x20,0xF1]],['battery',[0x10,0xFF,0x50,0xF1]],['status',[0x10,0xFF,0x40]]];
+  function luckCanvas(n,proto){
+    var c=document.createElement('canvas');c.width=96;c.height=96;var g=c.getContext('2d');
+    g.fillStyle='#fff';g.fillRect(0,0,96,96);g.fillStyle='#000';g.strokeStyle='#000';g.lineWidth=3;g.strokeRect(3,3,90,90);
+    g.textAlign='center';g.textBaseline='middle';g.font='700 28px sans-serif';g.fillText('CH'+n,48,32);g.font='700 24px sans-serif';g.fillText(proto==='base'?'F1':'FE',48,66);return c;
+  }
+  function widthCanvas(w){
+    var h=96,c=document.createElement('canvas');c.width=w;c.height=h;var g=c.getContext('2d');
+    g.fillStyle='#fff';g.fillRect(0,0,w,h);g.fillStyle='#000';g.strokeStyle='#000';g.lineWidth=4;g.strokeRect(2,2,w-4,h-4);
+    for(var x=16;x<w-8;x+=16){g.fillRect(x,h-18,2,12)}
+    g.textBaseline='middle';g.textAlign='center';g.font='700 28px sans-serif';g.fillText('W'+w,w/2,36);return c;
+  }
+  async function runLuckDiag(){
+    if(diagBusy)return;
+    diagBusy=true;diagRes=[];lastBtErr='';plog.length=0;
+    try{
+      await ensurePrinter();
+      var all=candidates(),chs=[];
+      all.forEach(function(c,i){if(!c.ch.properties.notify&&!c.ch.properties.indicate)chs.push({n:i+1,c:c})});
+      if(!chs.length)all.forEach(function(c,i){chs.push({n:i+1,c:c})});
+      chs=chs.slice(0,3);
+      if(!chs.length)throw {code:'nochar'};
+      renderPset();
+      setDiagMsg('กำลังถามข้อมูลจากเครื่อง…');
+      for(var i=0;i<chs.length;i++)for(var q=0;q<LUCK_Q.length;q++){
+        logP('-> CH'+chs[i].n+' '+LUCK_Q[q][0]);
+        try{await sendBytes(new Uint8Array(LUCK_Q[q][1]),{ch:chs[i].c.ch,chunk:20,resp:false})}catch(e){logP('   ERR '+((e&&(e.name||e.message))||'error'))}
+        await sleep(DIAG_GAP>=1000?700:150);
+      }
+      var protos=['aiyin','base'],total=chs.length*protos.length,k=0;
+      for(var ci=0;ci<chs.length;ci++)for(var pi=0;pi<protos.length;pi++){
+        k++;setDiagMsg('กำลังส่งแผ่นทดสอบ '+k+'/'+total+' (ช่อง '+chs[ci].n+' · '+protoName(protos[pi])+')');
+        var res={n:chs[ci].n,id:chs[ci].c.id,proto:protos[pi],kind:'img',ok:true,ack:false},ack=armAck();
+        logP('-> CH'+chs[ci].n+' print '+protos[pi]);
+        try{
+          await sendBytes(luckBytes(luckCanvas(chs[ci].n,protos[pi]),protos[pi],{paper:'cont',dens:2}),{ch:chs[ci].c.ch,chunk:20,resp:false});
+          res.ack=await ack.wait(DIAG_GAP>=1000?6000:1500);
+        }catch(e){ack.cancel();res.ok=false;res.err=(e&&(e.name||e.message))||'error'}
+        diagRes.push(res);await sleep(DIAG_GAP);
+      }
+      setDiagMsg('ส่งครบแล้ว ดูกระดาษที่ออกมา');
+    }catch(err){
+      if(err&&err.name==='NotFoundError')setDiagMsg('ยกเลิกการเลือกเครื่องพิมพ์');
+      else{lastBtErr=btHelp(err);setDiagMsg(btReason(err))}
+    }
+    diagBusy=false;renderPset();
+  }
+  async function testWidth(btn){
+    if(printing)return;printing=true;
+    var label=btn?btn.textContent:'';if(btn){btn.disabled=true;btn.textContent='กำลังพิมพ์…'}
+    try{
+      await ensurePrinter();
+      var ok=await sendCanvas(widthCanvas(PCFG.w||(PW===80?576:384)));
+      toast(ok===false?'ส่งแล้วแต่เครื่องยังไม่ตอบรับ':'ส่งแผ่นทดสอบความกว้างแล้ว',2200);
+    }catch(err){if(!(err&&err.name==='NotFoundError'))toast(btReason(err),2800)}
+    printing=false;if(btn&&btn.isConnected){btn.textContent=label;btn.disabled=false}
+  }
   function useCombo(n,proto){
     var c=candidates()[n-1];if(!c)return;
     PCFG.ch=c.id;PCFG.proto=proto;savePcfg();pchar=c.ch;
     toast('ตั้งเป็น ช่อง '+n+' · '+protoName(proto)+' แล้ว กด “พิมพ์ทดสอบใบออเดอร์” เพื่อลอง',2800);renderPset();renderOrder();
   }
   function diagReport(){
-    var L=['AIYIN printer report','device: '+(diagDevName||'-'),'config: proto='+PCFG.proto+' chunk='+PCFG.chunk+' resp='+PCFG.resp+' inv='+PCFG.inv+' ch='+(PCFG.ch||'auto'),'channels:'];
+    var L=['AIYIN printer report','device: '+(diagDevName||'-'),'config: proto='+PCFG.proto+' w='+PCFG.w+' paper='+PCFG.paper+' dens='+PCFG.dens+' chunk='+PCFG.chunk+' resp='+PCFG.resp+' inv='+PCFG.inv+' ch='+(PCFG.ch||'auto'),'channels:'];
     pchars.forEach(function(x){var ci=candidates().indexOf(x);L.push((ci>=0?'  CH'+(ci+1):'  -')+' svc='+shortUuid(x.svc)+' char='+shortUuid(x.uuid)+' ['+x.props+']')});
     if(!pchars.length)L.push('  (ยังไม่ได้เชื่อมต่อ)');
-    if(pnotes.length){L.push('notify from printer:');pnotes.forEach(function(x){L.push('  '+x)})}
-    if(diagRes.length){L.push('tests:');diagRes.forEach(function(r){L.push('  CH'+r.n+' '+protoName(r.proto)+' '+r.kind+': '+(r.ok?'sent':'ERR '+r.err))})}
+    if(plog.length){L.push('log:');plog.forEach(function(x){L.push('  '+x)})}
+    if(diagRes.length){L.push('tests:');diagRes.forEach(function(r){L.push('  CH'+r.n+' '+protoName(r.proto)+' '+r.kind+': '+(r.ok?'sent'+(r.ack?' ACK':''):'ERR '+r.err))})}
     return L.join('\n');
   }
   function btReason(err){
@@ -1169,7 +1258,7 @@ summary .amt{font-family:var(--f-display);font-weight:700;font-variant-numeric:t
       try{await Promise.all(['400','500','600','700'].map(function(w){return document.fonts.load(w+' 30px "IBM Plex Sans Thai"','กขค')}))}catch(e){}
       var cv=drawTicket(t);
       if(conn===true){
-        try{await sendBytes(toRaster(cv));toast('ส่งใบออเดอร์ไปเครื่องพิมพ์แล้ว',2000)}
+        try{var okp=await sendCanvas(cv);toast(okp===false?'ส่งใบออเดอร์ครบแล้ว แต่เครื่องยังไม่ตอบรับ ถ้าไม่ออกดูที่ ตั้งค่า > เครื่องพิมพ์':'ส่งใบออเดอร์ไปเครื่องพิมพ์แล้ว',okp===false?3200:2000)}
         catch(err){pchar=null;toast('ส่งไปเครื่องพิมพ์ไม่สำเร็จ ลองอีกครั้ง',2400)}
       }else if(conn.name==='NotFoundError'){
         toast('ยกเลิกการเลือกเครื่องพิมพ์',1800);
@@ -1200,10 +1289,13 @@ summary .amt{font-family:var(--f-display);font-weight:700;font-variant-numeric:t
   function renderPset(){
     var on=printer&&printer.gatt&&printer.gatt.connected,cands=candidates();
     function seg3(act,cur,items){return '<div class="seg" style="grid-template-columns:repeat('+items.length+',1fr)">'+items.map(function(it){return '<button class="btn" data-act="'+act+'" data-v="'+it[0]+'" aria-pressed="'+(cur===it[0])+'">'+it[1]+'</button>'}).join('')+'</div>'}
+    function segF(f,cur,items){return '<div class="seg" style="grid-template-columns:repeat('+items.length+',1fr)">'+items.map(function(it){return '<button class="btn" data-act="pcfg" data-f="'+f+'" data-v="'+it[0]+'" aria-pressed="'+(String(cur)===String(it[0]))+'" style="padding-left:4px;padding-right:4px">'+it[1]+'</button>'}).join('')+'</div>'}
     var combos='';
     if(diagRes.length&&!diagBusy){
-      combos='<div class="grp">เลือกวิธีที่พิมพ์ออกมาได้</div><p class="hint">ดูกระดาษที่ออกมา แต่ละแผ่นจะมีข้อความ เช่น “CH1 TSPL” ถ้าอ่านออกแผ่นไหน ให้กดปุ่มที่ตรงกัน ถ้าไม่มีแผ่นไหนพิมพ์เลย กดคัดลอกรายงานด้านล่างแล้วส่งให้ผม</p><div class="btnrow">'+
-        cands.map(function(c,i){return DIAG_PROTOS.map(function(p){return '<button class="btn" data-act="puse" data-n="'+(i+1)+'" data-p="'+p[0]+'">ใช้ ช่อง '+(i+1)+' · '+p[1]+'</button>'}).join('')}).join('')+'</div>';
+      var seen={},pairs=[];
+      diagRes.forEach(function(r){var kk=r.n+'|'+r.proto;if(r.ok&&!seen[kk]){seen[kk]=1;pairs.push(r)}});
+      combos='<div class="grp">เลือกวิธีที่พิมพ์ออกมาได้</div><p class="hint">ดูกระดาษที่ออกมา แต่ละแผ่นจะมีข้อความ เช่น “CH1 FE” หรือ “CH1 TSPL” ถ้าอ่านออกแผ่นไหน ให้กดปุ่มที่ตรงกัน ถ้าไม่มีแผ่นไหนพิมพ์เลย กดคัดลอกรายงานด้านล่างแล้วส่งให้ผม</p><div class="btnrow">'+
+        pairs.map(function(r){return '<button class="btn" data-act="puse" data-n="'+r.n+'" data-p="'+r.proto+'">ใช้ ช่อง '+r.n+' · '+protoName(r.proto)+(r.ack?' ✓':'')+'</button>'}).join('')+'</div>';
     }
     openSheetKeepScroll('<div class="s-head"><h3>เครื่องพิมพ์ใบออเดอร์</h3><button class="x" data-act="close" aria-label="ปิด">×</button></div>'+
       '<div class="grp">ขนาดกระดาษ</div><div class="seg">'+
@@ -1211,11 +1303,19 @@ summary .amt{font-family:var(--f-display);font-weight:700;font-variant-numeric:t
       '<button class="btn" data-act="pw" data-w="80" aria-pressed="'+(PW===80)+'">80 มม.</button></div>'+
       '<div class="grp">การเชื่อมต่อ</div><p class="hint">'+(on?'เชื่อมต่อกับ '+esc(printer.name||'เครื่องพิมพ์')+' แล้ว · ใช้ ช่อง '+(Math.max(0,cands.map(function(c){return c.ch}).indexOf(pchar))+1)+' · '+protoName(PCFG.proto):'ยังไม่เชื่อมต่อ')+'</p>'+
       '<button class="btn pri wide" style="margin-top:12px" data-act="pconn">'+(on?'เลือกเครื่องพิมพ์ตัวอื่น':'ค้นหา / เชื่อมต่อเครื่องพิมพ์')+'</button>'+
-      '<div class="grp">เครื่องพิมพ์ไม่ตอบสนอง? ให้แอปหาวิธีพิมพ์ให้</div>'+
-      '<p class="hint">แอปจะส่งชุดทดสอบเล็กๆ หลายแบบไปทุกช่องของเครื่อง (ใช้กระดาษราว 6-18 แผ่นสั้น) เปิดเครื่องพิมพ์และใส่กระดาษไว้ก่อน</p>'+
-      '<button class="btn wide" style="margin-top:8px" data-act="pdiag"'+(diagBusy?' disabled':'')+'>🔍 ลองพิมพ์ทุกวิธี</button>'+
+      '<div class="grp">เครื่อง AiYin (รวมรุ่น B11) พิมพ์ไม่ออก? ลองโหมดนี้</div>'+
+      '<p class="hint">เครื่องตระกูลนี้ต้องได้รับคำสั่ง “เปิดการพิมพ์” ก่อนถึงจะพิมพ์ แอปจะถามข้อมูลเครื่องและส่งแผ่นทดสอบเล็กๆ (กว้าง 12 มม.) หลายแผ่น เปิดเครื่องพิมพ์และใส่กระดาษไว้ก่อน</p>'+
+      '<button class="btn pri wide" style="margin-top:8px" data-act="pluck"'+(diagBusy?' disabled':'')+'>🔍 ลองโหมด AiYin (แนะนำ)</button>'+
       '<p class="hint" id="diagst" style="margin-top:8px">'+esc(diagMsg)+'</p>'+combos+
+      '<div class="grp">ยังไม่ออก? ลองคำสั่งแบบอื่น</div>'+
+      '<p class="hint">ส่งชุดทดสอบ ESC/POS, TSPL, CPCL ไปทุกช่อง (ใช้กระดาษราว 6-18 แผ่นสั้น)</p>'+
+      '<button class="btn wide" style="margin-top:8px" data-act="pdiag"'+(diagBusy?' disabled':'')+'>ลองพิมพ์ทุกวิธี</button>'+
       '<div class="grp">ตั้งค่าเอง</div><p class="hint">วิธีส่งคำสั่ง</p>'+seg3('pproto',PCFG.proto,[['escpos','ESC/POS'],['tspl','TSPL'],['cpcl','CPCL']])+
+      '<div style="height:6px"></div>'+seg3('pproto',PCFG.proto,[['aiyin','AiYin FE'],['base','AiYin F1']])+
+      '<p class="hint">เฉพาะ AiYin: ชนิดกระดาษ</p>'+segF('paper',PCFG.paper,[['cont','ม้วนต่อเนื่อง'],['gap','สติ๊กเกอร์มีช่อง']])+
+      '<p class="hint">เฉพาะ AiYin: ความเข้ม</p>'+segF('dens',PCFG.dens,[[0,'อ่อน'],[1,'ปกติ'],[2,'เข้ม']])+
+      '<p class="hint">ความกว้างภาพ (จุด) ถ้าภาพเบี้ยวหรือเป็นแถบเฉียง ให้ลองค่าที่น้อยลง แล้วกดพิมพ์แผ่นทดสอบ</p>'+segF('w',PCFG.w,[[0,'อัตโนมัติ'],[96,'96'],[192,'192'],[384,'384'],[576,'576']])+
+      '<button class="btn wide" style="margin-top:8px" data-act="pwtest">พิมพ์แผ่นทดสอบความกว้าง</button>'+
       '<p class="hint">ขนาดก้อนข้อมูล (ถ้าพิมพ์ไม่ออกหรือออกไม่ครบ ลองเลือก 20)</p>'+seg3('pchunk',String(PCFG.chunk),[['20','20'],['100','100'],['200','200']])+
       (cands.length>1?'<p class="hint">ช่องส่งข้อมูล</p>'+seg3('pch',PCFG.ch||(cands.filter(function(c){return c.ch===pchar})[0]||{}).id||'',cands.map(function(c,i){return [c.id,'ช่อง '+(i+1)]})):'')+
       '<div class="btnrow"><button class="btn" data-act="ptog" data-f="inv" aria-pressed="'+PCFG.inv+'" style="'+(PCFG.inv?'border-color:var(--accent)':'')+'">กลับสีภาพ: '+(PCFG.inv?'เปิด':'ปิด')+'</button>'+
@@ -1261,7 +1361,10 @@ summary .amt{font-family:var(--f-display);font-weight:700;font-variant-numeric:t
     else if(a==='pconn')connectOnly();
     else if(a==='pdiag')runDiag();
     else if(a==='puse')useCombo(+el.dataset.n,el.dataset.p);
-    else if(a==='pproto'){PCFG.proto=el.dataset.v==='tspl'||el.dataset.v==='cpcl'?el.dataset.v:'escpos';savePcfg();renderPset()}
+    else if(a==='pproto'){PCFG.proto=['tspl','cpcl','aiyin','base'].indexOf(el.dataset.v)>-1?el.dataset.v:'escpos';savePcfg();renderPset()}
+    else if(a==='pluck')runLuckDiag();
+    else if(a==='pwtest')testWidth(el);
+    else if(a==='pcfg'){var cf=el.dataset.f,cv2=el.dataset.v;if(cf==='w')PCFG.w=+cv2;else if(cf==='dens')PCFG.dens=+cv2;else if(cf==='paper')PCFG.paper=cv2==='gap'?'gap':'cont';PCFG.w=[96,192,384,576].indexOf(PCFG.w)>-1?PCFG.w:0;PCFG.dens=(PCFG.dens===0||PCFG.dens===2)?PCFG.dens:1;savePcfg();renderPset()}
     else if(a==='pchunk'){PCFG.chunk=+el.dataset.v===20?20:(+el.dataset.v===200?200:100);savePcfg();renderPset()}
     else if(a==='ptog'){PCFG[el.dataset.f]=!PCFG[el.dataset.f];savePcfg();renderPset()}
     else if(a==='pch'){var pc=candidates().filter(function(c){return c.id===el.dataset.v})[0];if(pc){PCFG.ch=pc.id;pchar=pc.ch;savePcfg();renderPset()}}
