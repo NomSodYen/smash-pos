@@ -1,5 +1,5 @@
 /* Service worker ของ POS สแมชเบอร์เกอร์: ทำให้เปิดแอปได้แม้อินเทอร์เน็ตหลุด */
-var CACHE = 'smash-pos-v7';
+var CACHE = 'smash-pos-v8';
 var CORE = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png'];
 var FONT_CSS = 'https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap';
 
