@@ -1,5 +1,5 @@
 /* Service worker ของ POS สแมชเบอร์เกอร์: ทำให้เปิดแอปได้แม้อินเทอร์เน็ตหลุด */
-var CACHE = 'smash-pos-v9';
+var CACHE = 'smash-pos-v10';
 var CORE = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png'];
 var FONT_CSS = 'https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap';
 
@@ -63,6 +63,7 @@ self.addEventListener('fetch', function (e) {
   var req = e.request;
   if (req.method !== 'GET') return;
   var url = new URL(req.url);
+  if (url.pathname.indexOf('/stock-burger/') !== -1) return;   // แอป Stock Burger มี service worker ของตัวเอง ไม่ให้ POS แคชทับ
   if (req.mode === 'navigate') { e.respondWith(pageRequest(req)); return; }
   if (url.origin === location.origin || url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com') {
     e.respondWith(assetRequest(req));
