@@ -566,10 +566,10 @@ summary .amt{font-family:var(--f-display);font-weight:700;font-variant-numeric:t
   }
   function inRange(o,r){return o.day>=r.from&&o.day<=r.to}
   function agg(os){
-    var a={total:0,n:os.length,byMode:{dine:{n:0,t:0},take:{n:0,t:0}},byPay:{cash:0,transfer:0,thaichuay:0},items:{},adds:{},days:{}};
+    var a={total:0,n:os.length,byMode:{dine:{n:0,t:0,q:0},take:{n:0,t:0,q:0}},byPay:{cash:0,transfer:0,thaichuay:0},items:{},adds:{},days:{}};
     os.forEach(function(o){
       a.total+=o.total;
-      var m=a.byMode[o.mode==='take'?'take':'dine'];m.n++;m.t+=o.total;
+      var m=a.byMode[o.mode==='take'?'take':'dine'];m.n++;m.t+=o.total;m.q+=o.lines.reduce(function(z,l){return z+l.qty},0);
       a.byPay[o.method==='transfer'||o.method==='thaichuay'?o.method:'cash']+=o.total;
       var dd=a.days[o.day]||(a.days[o.day]={n:0,t:0,dn:0,tk:0});dd.n++;dd.t+=o.total;if(o.mode==='take')dd.tk++;else dd.dn++;
       o.lines.forEach(function(l){
@@ -614,7 +614,7 @@ summary .amt{font-family:var(--f-display);font-weight:700;font-variant-numeric:t
     h+='<div class="chips" role="group" aria-label="ช่วงเวลา">'+chips+'</div>'+
       '<div class="sumbar"><button class="btn pri" id="pdfbtn" data-act="pdf">บันทึกยอดขายเป็น PDF</button><button class="btn" data-act="sumtext">📋 คัดลอกสรุปยอด (ส่ง LINE)</button></div>'+
       '<div class="rev"><small>ยอดขาย'+esc(r.label)+'</small><div class="big">'+fmt(total)+'</div>'+
-      '<div class="facts"><span><b>'+n+'</b> บิล (ทานที่ร้าน <b>'+a.byMode.dine.n+'</b> · กลับบ้าน <b>'+a.byMode.take.n+'</b>)</span><span>เฉลี่ย <b>'+fmt(n?Math.round(total/n):0)+'</b>/บิล</span>'+
+      '<div class="facts"><span><b>'+n+'</b> บิล · <b>'+(a.byMode.dine.q+a.byMode.take.q)+'</b> ชิ้น (ทานที่ร้าน <b>'+a.byMode.dine.n+'</b> บิล/<b>'+a.byMode.dine.q+'</b> ชิ้น · กลับบ้าน <b>'+a.byMode.take.n+'</b> บิล/<b>'+a.byMode.take.q+'</b> ชิ้น)</span><span>เฉลี่ย <b>'+fmt(n?Math.round(total/n):0)+'</b>/บิล</span>'+
       '<span>เงินสด <b>'+fmt(a.byPay.cash)+'</b></span><span>โอน/QR <b>'+fmt(a.byPay.transfer)+'</b></span>'+(a.byPay.thaichuay?'<span>ไทยช่วยไทย <b>'+fmt(a.byPay.thaichuay)+'</b></span>':'')+(voided?'<span>ยกเลิก <b>'+voided+'</b> บิล (ไม่นับยอด)</span>':'')+'</div></div>';
     if(!inR.length){
       h+='<p class="empty">ไม่มีบิลในช่วงนี้</p>';
@@ -624,9 +624,9 @@ summary .amt{font-family:var(--f-display);font-weight:700;font-variant-numeric:t
           Object.keys(a.days).sort().reverse().map(function(d){return '<tr><td>'+thDate(d)+' <span class="hint">(ร้าน '+a.days[d].dn+' · กลับบ้าน '+a.days[d].tk+')</span></td><td class="r">'+a.days[d].n+'</td><td class="r">'+fmt(a.days[d].t)+'</td></tr>'}).join('')+'</tbody></table></div>';
       }
       if(n){
-        h+='<h2 class="sec">ทานที่ร้าน / กลับบ้าน</h2><div class="tw"><table><thead><tr><th>แบบ</th><th class="r">บิล</th><th class="r">ยอด</th></tr></thead><tbody>'+
-          '<tr><td>ทานที่ร้าน</td><td class="r">'+a.byMode.dine.n+'</td><td class="r">'+fmt(a.byMode.dine.t)+'</td></tr>'+
-          '<tr><td>กลับบ้าน</td><td class="r">'+a.byMode.take.n+'</td><td class="r">'+fmt(a.byMode.take.t)+'</td></tr></tbody></table></div>'+
+        h+='<h2 class="sec">ทานที่ร้าน / กลับบ้าน</h2><div class="tw"><table><thead><tr><th>แบบ</th><th class="r">บิล</th><th class="r">ชิ้น</th><th class="r">ยอด</th></tr></thead><tbody>'+
+          '<tr><td>ทานที่ร้าน</td><td class="r">'+a.byMode.dine.n+'</td><td class="r">'+a.byMode.dine.q+'</td><td class="r">'+fmt(a.byMode.dine.t)+'</td></tr>'+
+          '<tr><td>กลับบ้าน</td><td class="r">'+a.byMode.take.n+'</td><td class="r">'+a.byMode.take.q+'</td><td class="r">'+fmt(a.byMode.take.t)+'</td></tr></tbody></table></div>'+
           '<h2 class="sec">เมนูขายดี</h2><div class="tw"><table><thead><tr><th>รายการ</th><th class="r">จำนวน</th><th class="r">ยอด</th></tr></thead><tbody>'+rows(a.items)+'</tbody></table></div>'+
           (Object.keys(a.adds).length?'<h2 class="sec">แพตตี้/ท็อปปิ้งเพิ่ม (ไม่นับเป็นเบอร์เกอร์)</h2><div class="tw"><table><thead><tr><th>รายการ</th><th class="r">จำนวน</th><th class="r">ยอด</th></tr></thead><tbody>'+rows(a.adds)+'</tbody></table></div>':'');
       }
@@ -884,7 +884,7 @@ summary .amt{font-family:var(--f-display);font-weight:700;font-variant-numeric:t
        สีตัวอักษรเข้มขึ้น (ดำสนิท/เทาเข้ม) และใช้ตัวหนาปานกลางขึ้นไป เพราะของเดิมบางและสีเทาอ่อน พิมพ์แล้วจาง */
     var W=877,H=1240,M=52,Z=1.6,K=0.8,INK='#000000',MUTED='#262c28',LINE='#5d655f',RED='#b01f0d';
     var cx=null,cur=null,y=0,pageNo=0,pend=[],sheets=[];
-    var MIDX=W-M-170,MIDEDGE=MIDX-64,RREDGE=W-M-120;
+    var MIDX=W-M-170,BILLX=W-M-290,MIDEDGE=MIDX-64,RREDGE=W-M-120;
     var showBills=os.length<=150;
     function k(v){return Math.round(v*K)}
     function newPage(){
@@ -932,13 +932,14 @@ summary .amt{font-family:var(--f-display);font-weight:700;font-variant-numeric:t
       font(600,24);put('ยอดขายรวม '+r.label,M,'left',MUTED);y+=k(120);
       font(700,92,true);put(fmt(total),M,'left',INK);y+=k(55);
       /* จำนวนออเดอร์แยกทานที่ร้าน / กลับบ้าน ต่อท้ายจำนวนบิล */
-      font(600,26);put(n+' บิล (ทานที่ร้าน '+byMode.dine.n+' · กลับบ้าน '+byMode.take.n+') · เฉลี่ย '+fmt(n?Math.round(total/n):0)+' ต่อบิล',M,'left',INK);y+=k(voided?36:20);
+      font(600,26);put(n+' บิล · '+(byMode.dine.q+byMode.take.q)+' ชิ้น · เฉลี่ย '+fmt(n?Math.round(total/n):0)+' ต่อบิล',M,'left',INK);y+=k(voided?36:20);
       if(voided){font(500,24);put('ยกเลิก '+voided+' บิล (ไม่นับยอด)',M,'left',MUTED);y+=k(20)}
       section('วิธีรับเงิน',['วิธี',null,'ยอด']);
       row('เงินสด',null,fmt(byPay.cash));row('โอน / QR',null,fmt(byPay.transfer));if(byPay.thaichuay)row('ไทยช่วยไทย',null,fmt(byPay.thaichuay));
       if(r.multi){section('แยกรายวัน',['วันที่ (ทานที่ร้าน · กลับบ้าน)','บิล','ยอด']);Object.keys(a.days).sort().reverse().forEach(function(d){var dd=a.days[d];row(thDate(d)+'  ('+dd.dn+' · '+dd.tk+')',String(dd.n),fmt(dd.t))})}
-      section('ทานที่ร้าน / กลับบ้าน',['แบบ','บิล','ยอด']);
-      row('ทานที่ร้าน',String(byMode.dine.n),fmt(byMode.dine.t));row('กลับบ้าน',String(byMode.take.n),fmt(byMode.take.t));
+      section('ทานที่ร้าน / กลับบ้าน');
+      need(120);font(700,22);put('แบบ',M,'left',MUTED);put('บิล',BILLX,'right',MUTED);put('ชิ้น',MIDX,'right',MUTED);put('ยอด',W-M,'right',MUTED);y+=k(12);rule();y+=k(30);
+      [['ทานที่ร้าน',byMode.dine],['กลับบ้าน',byMode.take]].forEach(function(m){need(46);font(500,26);put(m[0],M,'left');put(String(m[1].n),BILLX,'right');put(String(m[1].q),MIDX,'right');put(fmt(m[1].t),W-M,'right');y+=k(46)});
       section('เมนูขายดี',['รายการ','จำนวน','ยอด']);table(items);
       if(Object.keys(adds).length){section('แพตตี้/ท็อปปิ้งเพิ่ม (ไม่นับเป็นเบอร์เกอร์)',['รายการ','จำนวน','ยอด']);table(adds)}
       if(!showBills){section('รายการบิล');row('มีบิลมากกว่า 150 บิล จึงไม่แสดงรายละเอียดทีละบิล (ดูได้ในแอป หรือเลือกช่วงที่สั้นลง)',null,null,{c:MUTED,s:22})}
@@ -980,7 +981,7 @@ summary .amt{font-family:var(--f-display);font-weight:700;font-variant-numeric:t
     var r=rangeInfo(),live=orders.filter(function(o){return inRange(o,r)&&!o.void}),a=agg(live);
     var L=['สแมชเบอร์เกอร์ · สรุปยอดขาย '+r.label+(r.multi&&r.from!=='0000-00-00'?' ('+thDate(r.from)+' – '+thDate(r.to)+')':(r.multi?'':' ('+thDate(r.from)+')')),
       'ยอดขายรวม '+fmt(a.total),
-      a.n+' บิล (ทานที่ร้าน '+a.byMode.dine.n+' · กลับบ้าน '+a.byMode.take.n+') เฉลี่ย '+fmt(a.n?Math.round(a.total/a.n):0)+'/บิล',
+      a.n+' บิล '+(a.byMode.dine.q+a.byMode.take.q)+' ชิ้น (ทานที่ร้าน '+a.byMode.dine.n+' บิล/'+a.byMode.dine.q+' ชิ้น · กลับบ้าน '+a.byMode.take.n+' บิล/'+a.byMode.take.q+' ชิ้น) เฉลี่ย '+fmt(a.n?Math.round(a.total/a.n):0)+'/บิล',
       'เงินสด '+fmt(a.byPay.cash)+' · โอน/QR '+fmt(a.byPay.transfer)+(a.byPay.thaichuay?' · ไทยช่วยไทย '+fmt(a.byPay.thaichuay):'')];
     var ks=Object.keys(a.items).sort(function(x,z){return a.items[z].qty-a.items[x].qty});
     if(ks.length){L.push('','เมนูขายดี');ks.slice(0,10).forEach(function(kk,i){L.push((i+1)+'. '+kk+' × '+a.items[kk].qty+' ('+fmt(a.items[kk].amt)+')')})}
