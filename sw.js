@@ -1,6 +1,6 @@
 /* Service worker ของ POS สแมชเบอร์เกอร์: ทำให้เปิดแอปได้แม้อินเทอร์เน็ตหลุด */
-var CACHE = 'smash-pos-v22';
-var CORE = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png'];
+var CACHE = 'smash-pos-v23';
+var CORE = ['./', 'index.html', 'manifest.json', 'icon-192.png', 'icon-512.png'];
 var FONT_CSS = 'https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap';
 
 self.addEventListener('install', function (e) {
