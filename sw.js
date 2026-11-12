@@ -1,5 +1,5 @@
 /* Service worker ของ POS สแมชเบอร์เกอร์: ทำให้เปิดแอปได้แม้อินเทอร์เน็ตหลุด */
-var CACHE = 'smash-pos-v23';
+var CACHE = 'smash-pos-v24';
 var CORE = ['./', 'index.html', 'manifest.json', 'icon-192.png', 'icon-512.png'];
 var FONT_CSS = 'https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap';
 
@@ -42,8 +42,11 @@ async function pageRequest(req) {
     if (r && r.ok) {
       c.put('./', r.clone());
       c.put('index.html', r.clone());
+      return r;
     }
-    return r;
+    // เว็บตอบ 404/500 (เช่น GitHub ปิดเว็บชั่วคราว): ใช้แอปที่เก็บไว้แทน ไม่ให้ขึ้นหน้าว่าง
+    var keep = (await c.match(req, { ignoreSearch: true })) || (await c.match('./')) || (await c.match('index.html'));
+    return keep || r;
   } catch (err) {                                      // ออฟไลน์/เน็ตช้า: ใช้ของที่เก็บไว้
     var cached = (await c.match(req, { ignoreSearch: true })) || (await c.match('./')) || (await c.match('index.html'));
     return cached || net;
