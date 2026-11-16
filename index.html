@@ -392,7 +392,6 @@ body{background:radial-gradient(110% 50% at 50% 0%,#2c1e15 0%,var(--bg) 60%) no-
 .tab i{position:absolute;top:2px;right:4px;margin:0}
 @media(max-width:859px){.tabs{width:100%}.tab{flex:1;padding:4px 6px}}
 /* ยอดวันนี้ */
-.todays{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;max-width:520px;margin-top:4px}
 .tcard,.scard{background:var(--surface);border-radius:16px;padding:12px 14px;box-shadow:var(--sh1);display:flex;align-items:center;gap:10px;min-width:0}
 .tcard small,.scard small{display:block;font-size:12px;color:var(--muted);line-height:1.3}
 .tcard b{font-family:var(--f-display);font-size:20px;line-height:1.15;white-space:nowrap}
@@ -462,7 +461,7 @@ h2.sec{font-size:18px;letter-spacing:0;text-transform:none;color:var(--ink);font
 :root[data-theme="dark"] .ptag.qr{background:rgba(110,160,240,.16);color:#9cc0f5}
 :root[data-theme="dark"] .ptag.tct{background:rgba(180,140,230,.16);color:#cdb2f0}
 summary{gap:8px}
-@media print{.sgrid,.hchart,.todays,.ptag{display:none!important}.rev .big{display:block}}
+@media print{.sgrid,.hchart,.ptag{display:none!important}.rev .big{display:block}}
 </style>
 
 <div class="wrap">
@@ -478,7 +477,6 @@ summary{gap:8px}
 
   <main id="v-sell" class="sell">
     <section aria-label="เมนู">
-      <div class="todays" id="todays"></div>
       <h2 class="sec">เลือกเบอร์เกอร์</h2>
       <div class="menu" id="menu"></div>
       <p class="hint" style="margin-top:12px">แตะ “เพิ่มเลย” เพื่อใส่ออเดอร์ทันที แล้วเลือกผัก ไข่ ชีส เบคอน เพิ่มแพตตี้ (ราคาโปรหรือราคาปกติ) ต่อได้เลย ปุ่ม ทานที่ร้าน / กลับบ้าน อยู่ล่างสุดของหน้านั้น (กด × ถ้าไม่เอาเพิ่ม)</p>
@@ -652,13 +650,10 @@ summary{gap:8px}
     $('menu').innerHTML=REG_KEYS.map(card).join('');
     renderTodays();
   }
-  /* v25: แถบยอดวันนี้ + จำนวนที่ขายวันนี้บนการ์ดเมนู (อ่านจากบิลอย่างเดียว ไม่แก้ข้อมูล) */
+  /* v25: จำนวนที่ขายวันนี้บนการ์ดเมนู (ไม่โชว์ยอดเงินบนหน้าขาย ลูกค้ามองเห็นได้) (อ่านจากบิลอย่างเดียว ไม่แก้ข้อมูล) */
   function renderTodays(){
-    var td=liveOrders().filter(function(o){return o.day===dayKey()}),tot=0,sold={};
-    td.forEach(function(o){tot+=o.total;o.lines.forEach(function(l){sold[l.name]=(sold[l.name]||0)+l.qty})});
-    var el=$('todays');
-    if(el)el.innerHTML='<div class="tcard"><span class="tdot" aria-hidden="true">฿</span><div><small>ยอดวันนี้</small><b class="num">'+fmt(tot)+'</b></div></div>'+
-      '<div class="tcard"><span class="tdot g" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg></span><div><small>บิลวันนี้</small><b class="num">'+td.length+' บิล</b></div></div>';
+    var td=liveOrders().filter(function(o){return o.day===dayKey()}),sold={};
+    td.forEach(function(o){o.lines.forEach(function(l){sold[l.name]=(sold[l.name]||0)+l.qty})});
     document.querySelectorAll('[data-sold]').forEach(function(s){var b=BURGER[s.dataset.sold],q=b?sold[b.name]||0:0;s.textContent='ขายวันนี้ '+q+' ชิ้น'});
   }
 
